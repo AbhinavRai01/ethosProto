@@ -34,9 +34,32 @@ export const getUserById = async (userId) => {
 export const getSwipesByEntityId = async (entityId) => {
     try {
         const response = await axios.get(`${API_URL}/${entityId}/swipes`);
+        console.log("Swipes response:", response.data);
         return response.data;
     } catch (error) {
         console.error('Error fetching swipes by entity ID:', error);
+        throw error;
+    }
+};
+
+export const getCCTVCapturesByEntityId = async (entityId) => {
+    try {
+        const response = await axios.get(`${API_URL}/${entityId}/captures`);
+        console.log("CCTV captures response:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching CCTV captures by entity ID:', error);
+        throw error;
+    }
+};
+
+export const getBookingsByEntityId = async (entityId) => {
+    try {
+        const response = await axios.get(`${API_URL}/${entityId}/bookings`);
+        console.log("Bookings response", response.data);
+        return response.data;
+    } catch(error) {
+        console.error('Error fetching Bookings', error);
         throw error;
     }
 };

@@ -13,7 +13,7 @@ const upload = multer({ dest: 'uploads/' });
 
 // Helper function to read Excel file
 const readExcelFile = (filePath) => {
-    const workbook = xlsx.readFile(filePath);
+    const workbook = xlsx.readFile(filePath, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     return xlsx.utils.sheet_to_json(sheet);
@@ -23,16 +23,32 @@ const readExcelFile = (filePath) => {
 const uploadCampusCardSwipes = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-        
+        // This now returns data with real JavaScript Date objects
         const jsonData = readExcelFile(req.file.path);
+        
         const swipes = jsonData.map((row) => ({
             card_id: row["card_id"] || row["Card ID"],
-            timestamp: new Date(row["timestamp"] || row["Timestamp"]),
-            location_id: row["location_id"] || row["Location"]
+            timestamp: row["timestamp"] || row["Timestamp"],
+            location_id: row["location_id"] || row["Location ID"] // Added a more likely header name
         }));
 
-        await CampusCardSwipe.insertMany(swipes);
-        res.json({ message: "Campus card swipes uploaded successfully", insertedCount: swipes.length });
+        // --- FIX #3: Add validation to ensure data integrity ---
+        const validSwipes = swipes.filter(swipe => 
+            swipe.timestamp instanceof Date && !isNaN(swipe.timestamp)
+        );
+        
+        if (validSwipes.length === 0) {
+            return res.status(400).json({ error: "File contains no valid swipe records with readable timestamps." });
+        }
+
+        // It's best practice to clear old data to prevent duplicates on re-upload
+        await CampusCardSwipe.deleteMany({});
+        await CampusCardSwipe.insertMany(validSwipes);
+
+        res.json({ 
+            message: "Campus card swipes uploaded successfully", 
+            insertedCount: validSwipes.length 
+        });
     } catch (err) {
         console.error("❌ Error uploading campus card swipes:", err);
         res.status(500).json({ error: err.message });
@@ -41,22 +57,43 @@ const uploadCampusCardSwipes = async (req, res) => {
 
 // 2. Bookings
 const uploadBookings = async (req, res) => {
-
-    console.log("Reached uploadBookings controller");
     try {
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
         
         const jsonData = readExcelFile(req.file.path);
-        const bookings = jsonData.map((row) => ({
-            entity_id: row["entity_id"] || row["Entity ID"],
-            room_id: row["room_id"] || row["Room ID"],
-            start_time: new Date(row["start_time"] || row["Start Time"]),
-            end_time: new Date(row["end_time"] || row["End Time"]),
-            attended: (row["attended"] || row["Attended"])?.toString().toLowerCase() === 'yes'
-        }));
 
-        await Booking.insertMany(bookings);
-        res.json({ message: "Bookings uploaded successfully", insertedCount: bookings.length });
+        const bookings = jsonData.map((row) => {
+            // --- THIS IS THE FIX ---
+            // The code now checks for the correct header "attended (YES/NO)" first.
+            const attendedValue = row["attended (YES/NO)"] || row["attended"] || row["Attended"];
+            
+            // This logic correctly handles "Yes", "yes", "TRUE", "true", 1, etc.
+            const isAttended = ['true', 'yes', '1'].includes(String(attendedValue).toLowerCase());
+
+            return {
+                entity_id: row["entity_id"] || row["Entity ID"],
+                room_id: row["room_id"] || row["Room ID"],
+                start_time: row["start_time"] || row["Start Time"],
+                end_time: row["end_time"] || row["End Time"],
+                attended: isAttended
+            };
+        });
+
+        // Add validation for bookings
+        const validBookings = bookings.filter(b => 
+            b.start_time instanceof Date && !isNaN(b.start_time) &&
+            b.end_time instanceof Date && !isNaN(b.end_time)
+        );
+
+        if (validBookings.length === 0) {
+            return res.status(400).json({ error: "No valid booking records with readable timestamps found." });
+        }
+        
+        await Booking.deleteMany({});
+        await Booking.insertMany(validBookings);
+        
+        res.json({ message: "Bookings uploaded successfully", insertedCount: validBookings.length });
+
     } catch (err) {
         console.error("❌ Error uploading bookings:", err);
         res.status(500).json({ error: err.message });

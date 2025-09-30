@@ -1,40 +1,42 @@
-import React, { useState } from 'react';
+import { React, useState } from 'react';
 // This component correctly uses your actual API functions
-import { uploadEntities, getSwipesByEntityId, getUserById } from '../api/userApi';
+import { uploadEntities, getSwipesByEntityId, getUserById, getCCTVCapturesByEntityId, getBookingsByEntityId } from '../api/userApi';
 
 export default function ViewAndUploadUser() {
     // State for the search functionality
     const [userId, setUserId] = useState("");
     const [searchedUser, setSearchedUser] = useState(null);
     const [swipes, setSwipes] = useState([]);
-    const [searchStatus, setSearchStatus] = useState('idle'); // 'idle', 'loading', 'success', 'error'
+    const [captures, setCaptures] = useState([]);
+    const [bookings, setBookings] = useState([]);
+    const [searchStatus, setSearchStatus] = useState('idle');
     const [activeTab, setActiveTab] = useState('details');
 
     // State for the upload functionality
     const [selectedFile, setSelectedFile] = useState(null);
-    const [uploadStatus, setUploadStatus] = useState('idle'); // 'idle', 'uploading', 'success', 'error'
+    const [uploadStatus, setUploadStatus] = useState('idle');
     const [uploadMessage, setUploadMessage] = useState('');
 
     const handleSearch = async () => {
-        // Guard clause to prevent empty searches
         if (!userId) return;
         
         setSearchStatus('loading');
         setSearchedUser(null);
         setSwipes([]);
+        setCaptures([]);
+        setBookings([]);
         setActiveTab('details');
 
         try {
-
-            console.log(userId);
-            // It correctly uses the 'userId' from the input field for the API calls.
             const userResponse = await getUserById(userId);
-
-            console.log(userResponse);
             const swipesResponse = await getSwipesByEntityId(userId);
+            const capturesResponse = await getCCTVCapturesByEntityId(userId);
+            const bookingsResponse = await getBookingsByEntityId(userId); 
 
             setSearchedUser(userResponse);
             setSwipes(swipesResponse);
+            setCaptures(capturesResponse);
+            setBookings(bookingsResponse);
             setSearchStatus('success');
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -57,8 +59,8 @@ export default function ViewAndUploadUser() {
             const response = await uploadEntities(selectedFile);
             setUploadStatus('success');
             setUploadMessage(response.message || 'File uploaded successfully!');
-            setSelectedFile(null); // Clear file input after success
-            document.getElementById('file-input').value = ''; // Reset file input visually
+            setSelectedFile(null);
+            document.getElementById('file-input').value = '';
         } catch (error) {
             setUploadStatus('error');
             setUploadMessage('Upload failed. Please try again.');
@@ -69,7 +71,7 @@ export default function ViewAndUploadUser() {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-4xl mx-auto space-y-8">
-                {/* === Upload Section === */}
+                {/* Upload Section */}
                 <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
                     <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b border-gray-200 pb-4">Upload Entities</h2>
                     <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -94,7 +96,7 @@ export default function ViewAndUploadUser() {
                     )}
                 </div>
 
-                {/* === View User Section === */}
+                {/* View User Section */}
                 <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
                     <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b border-gray-200 pb-4">View User Data</h2>
                     <div className="flex items-center gap-4">
@@ -114,7 +116,7 @@ export default function ViewAndUploadUser() {
                         </button>
                     </div>
 
-                    {/* --- Data Display Area --- */}
+                    {/* Data Display Area */}
                     <div className="mt-8 min-h-[200px]">
                         {searchStatus === 'loading' && <p className="text-center text-gray-500 pt-10">Fetching data... ⏳</p>}
                         {searchStatus === 'error' && <p className="text-center text-red-500 pt-10">Could not fetch user data. Please check the ID and try again. 😥</p>}
@@ -124,14 +126,16 @@ export default function ViewAndUploadUser() {
                                 <div className="flex border-b bg-gray-50/70 overflow-x-auto">
                                     <TabButton name="details" activeTab={activeTab} setActiveTab={setActiveTab}>User Details</TabButton>
                                     <TabButton name="swipes" activeTab={activeTab} setActiveTab={setActiveTab}>Swipes ({swipes.length})</TabButton>
-                                    <TabButton name="attendance" disabled>Lab Attendance</TabButton>
-                                    <TabButton name="cctv" disabled>CCTV Captures</TabButton>
+                                    <TabButton name="bookings" activeTab={activeTab} setActiveTab={setActiveTab}>Bookings ({bookings.length})</TabButton>
+                                    <TabButton name="cctv" activeTab={activeTab} setActiveTab={setActiveTab}>CCTV Captures ({captures.length})</TabButton>
                                 </div>
                                 
                                 {/* Tab Content */}
                                 <div className="p-6">
                                     {activeTab === 'details' && <UserDetails user={searchedUser} />}
                                     {activeTab === 'swipes' && <SwipesTable swipes={swipes} />}
+                                    {activeTab === 'cctv' && <CapturesTable captures={captures} />}
+                                    {activeTab === 'bookings' && <BookingsTable bookings={bookings} />}
                                 </div>
                             </div>
                         )}
@@ -143,7 +147,7 @@ export default function ViewAndUploadUser() {
     );
 }
 
-// --- Helper Components for Data Display ---
+// --- Helper Components ---
 
 const TabButton = ({ name, activeTab, setActiveTab, disabled = false, children }) => (
     <button
@@ -153,7 +157,7 @@ const TabButton = ({ name, activeTab, setActiveTab, disabled = false, children }
         } ${disabled ? 'text-gray-300 cursor-not-allowed' : ''}`}
         disabled={disabled}
     >
-        {children} {disabled && <span className="text-xs opacity-70 ml-1">(Soon)</span>}
+        {children}
     </button>
 );
 
@@ -186,19 +190,76 @@ const SwipesTable = ({ swipes }) => {
                     <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {swipes.map((swipe) => (
-                        <tr key={swipe._id || swipe.card_id}>
+                        <tr key={swipe._id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{swipe.location_id?.replace(/_/g, ' ')}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(swipe.updatedAt).toLocaleString()}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                    swipe.type === 'IN' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(swipe.timestamp).toLocaleString()}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+const CapturesTable = ({ captures }) => {
+    if (!captures || captures.length === 0) {
+        return <p className="text-gray-500 text-center py-8">No CCTV Captures found for this user.</p>;
+    }
+    return (
+        <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                    <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                    {captures.map((capture) => (
+                        <tr key={capture._id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{capture.location_id?.replace(/_/g, ' ')}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(capture.timestamp).toLocaleString()}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+// --- MODIFIED BookingsTable Component ---
+const BookingsTable = ({ bookings }) => {
+    if (!bookings || bookings.length === 0) {
+        return <p className="text-gray-500 text-center py-8">No bookings found for this user.</p>;
+    }
+    return (
+        <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                    <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
+                        {/* CHANGE 1: Added the "Attendance" column header */}
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                    {bookings.map((booking) => (
+                        <tr key={booking._id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.room_id}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(booking.start_time).toLocaleString()}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(booking.end_time).toLocaleString()}</td>
+                            {/* CHANGE 2: Added the "Attendance" data cell with conditional rendering */}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    booking.attended ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                 }`}>
-                                    {swipe.type || 'N/A'}
+                                    {booking.attended ? 'Yes' : 'No'}
                                 </span>
                             </td>
                         </tr>
@@ -208,3 +269,4 @@ const SwipesTable = ({ swipes }) => {
         </div>
     );
 };
+

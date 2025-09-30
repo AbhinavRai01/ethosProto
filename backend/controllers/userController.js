@@ -4,6 +4,8 @@ const multer = require("multer");
 const xlsx = require("xlsx");
 const Entity = require('../models/entityModel');
 const campusCardSwipes = require('../models/campusCardSwipes');
+const CctvFrame = require('../models/CctvFrams');
+const LabBooking = require('../models/labBookings');
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -70,6 +72,7 @@ const getSwipesByEntityId = async (req, res) => {
 
     console.log("Card ID:", cardId);
     const swipes = await campusCardSwipes.find({ card_id: cardId.card_id });
+    //console.log("Swipes found:", swipes);
     res.json(swipes);
   } catch (err) {
     console.error('❌ Error fetching swipes by entity ID:', err);
@@ -77,4 +80,30 @@ const getSwipesByEntityId = async (req, res) => {
   }
 };
 
-module.exports = { uploadEntities, getSwipesByEntityId, getUserById };
+const getCCTVCapturesByEntityId = async (req, res) => {
+    try {
+        const entityId = req.params.entityId;
+        const faceId = await Entity.findOne({ entity_id: entityId }).select('face_id');
+        console.log("Face ID:", faceId);
+        const CCTVCaptures = await CctvFrame.find({ face_id: faceId.face_id });
+        //console.log("CCTV captures found:", CCTVCaptures);
+        res.json(CCTVCaptures);
+    } catch (err) {
+        console.error('❌ Error fetching CCTV captures by entity ID:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const getBookingsByEntityId = async (req,res) => {
+  try {
+    const entityId = req.params.entityId;
+    const Bookings = await LabBooking.find({ entity_id: entityId })
+    console.log("Bookings found:", Bookings);
+    res.json(Bookings);
+  } catch(err) {
+     console.error('❌ Error fetching Bookings by entity ID:', err);
+        res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { uploadEntities, getSwipesByEntityId, getUserById, getCCTVCapturesByEntityId, getBookingsByEntityId };

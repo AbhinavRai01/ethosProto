@@ -7,7 +7,7 @@ const bookingSchema = new mongoose.Schema({
     entity_id: {
         type: String,
         required: [true, 'An entity ID is required for the booking.'],
-        trim: true,
+        //trim: true,
         // Example: 'F100000'. Could also be a reference to another model if you have a User/Entity collection:
         // type: mongoose.Schema.Types.ObjectId,
         // ref: 'Entity' 
@@ -16,7 +16,7 @@ const bookingSchema = new mongoose.Schema({
     room_id: {
         type: String,
         required: [true, 'A room ID is required for the booking.'],
-        trim: true,
+        //trim: true,
         // Example: 'CR-301'
     },
     
@@ -41,7 +41,7 @@ const bookingSchema = new mongoose.Schema({
     attended: {
         type: Boolean,
         // The booking is not attended until explicitly marked, so `false` is a sensible default.
-        default: false, 
+        //default: false, 
     }
 }, {
     // Add timestamps for createdAt and updatedAt fields
