@@ -6,6 +6,10 @@ const Entity = require('../models/entityModel');
 const campusCardSwipes = require('../models/campusCardSwipes');
 const CctvFrame = require('../models/CctvFrams');
 const LabBooking = require('../models/labBookings');
+const WifiLog = require('../models/wifiLogs');
+const LibraryCheckout = require('../models/libraryCheckout');
+const FreeTextNote = require('../models/freeTextNotes');
+const FaceImage = require('../models/faceImages');
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -106,4 +110,55 @@ const getBookingsByEntityId = async (req,res) => {
   }
 };
 
-module.exports = { uploadEntities, getSwipesByEntityId, getUserById, getCCTVCapturesByEntityId, getBookingsByEntityId };
+const getDeviceByEntityId = async (req, res) => {
+    try {
+        const entityId = req.params.entityId;
+        const deviceHash = await Entity.findOne({ entity_id: entityId }).select('device_hash');
+        console.log("Device Hash:", deviceHash);
+        const DeviceLogs = await WifiLog.find({ device_hash: deviceHash.device_hash });
+        //console.log("Device Logs found:", DeviceLogs);
+        res.json(DeviceLogs);
+    } catch (err) {
+        console.error('❌ Error fetching Device Logs by entity ID:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const getCheckoutsByEntityId = async (req, res) => {
+    try {
+        const entityId = req.params.entityId;
+        const Checkouts = await LibraryCheckout.find({ entity_id: entityId });
+        //console.log("Checkouts found:", Checkouts);
+        res.json(Checkouts);
+    } catch (err) {
+        console.error('❌ Error fetching Checkouts by entity ID:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const getNotesByEntityId = async (req, res) => {
+    try {
+        const entityId = req.params.entityId;
+        const Notes = await FreeTextNote.find({ entity_id: entityId });
+        //console.log("Notes found:", Notes);
+        res.json(Notes);
+    } catch (err) {
+        console.error('❌ Error fetching Notes by entity ID:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const getFacesByEntityId = async (req, res) => {
+    try {
+        const entityId = req.params.entityId;
+        const faceId = await Entity.findOne({ entity_id: entityId }).select('face_id');
+        const Image = await FaceImage.find({ face_id: faceId.face_id });
+        //console.log("Images found:", Image);
+        res.json(Image);
+    } catch (err) {
+        console.error('❌ Error fetching Image by entity ID:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+module.exports = { uploadEntities, getSwipesByEntityId, getUserById, getCCTVCapturesByEntityId, getBookingsByEntityId, getDeviceByEntityId, getCheckoutsByEntityId, getNotesByEntityId, getFacesByEntityId };

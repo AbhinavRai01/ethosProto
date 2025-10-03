@@ -1,27 +1,16 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-// --- API Service Logic (Integrated into this file) ---
-
-// The base URL for your upload API endpoints.
+// API Service Logic
 const API_URL = 'http://localhost:3000/api/uploads';
 
-/**
- * A generic helper function to upload a file to a specific endpoint.
- * @param {File} file - The file to be uploaded.
- * @param {string} endpoint - The specific API endpoint (e.g., '/swipes', '/bookings').
- * @returns {Promise<any>} The response data from the server.
- * @throws Will throw an error if the upload fails.
- */
 const uploadFile = async (file, endpoint) => {
     const formData = new FormData();
     formData.append('file', file);
-
     try {
         const response = await axios.post(`${API_URL}${endpoint}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
-        console.log(`Successfully uploaded to ${endpoint}:`, response.data);
         return response.data;
     } catch (error) {
         console.error(`Error uploading to ${endpoint}:`, error.response ? error.response.data : error.message);
@@ -29,75 +18,64 @@ const uploadFile = async (file, endpoint) => {
     }
 };
 
-// API functions for each model
 const uploadCampusCardSwipes = (file) => uploadFile(file, '/swipes');
 const uploadBookings = (file) => uploadFile(file, '/bookings');
 const uploadCctvFrames = (file) => uploadFile(file, '/cctv');
 const uploadLibraryCheckouts = (file) => uploadFile(file, '/library');
 const uploadFreeTextNotes = (file) => uploadFile(file, '/notes');
+const uploadWifiLogs = (file) => uploadFile(file, '/wifi');
+const uploadFaceImages = (file) => uploadFile(file, '/faces'); // New API function for face images
 
-// --- End of API Service Logic ---
-
-
-// A mapping of upload types to their corresponding API functions and titles
+// Main UI Configuration
 const UPLOAD_CONFIG = {
     swipes: {
         title: 'Campus Card Swipes',
         apiFunc: uploadCampusCardSwipes,
-        icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-        ),
+        icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> ),
+        accept: '.csv, .xlsx, .xls',
     },
     bookings: {
         title: 'Room Bookings',
         apiFunc: uploadBookings,
-        icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-        ),
+        icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> ),
+        accept: '.csv, .xlsx, .xls',
     },
     cctv: {
         title: 'CCTV Frames',
         apiFunc: uploadCctvFrames,
-        icon: (
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-        ),
+        icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> ),
+        accept: '.csv, .xlsx, .xls',
     },
     library: {
         title: 'Library Checkouts',
         apiFunc: uploadLibraryCheckouts,
-        icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494m-9-5.747h18" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494m-9-5.747h18" />
-                <path d="M4 6h16v12H4z" />
-                <path d="M4 6h16v12H4z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494m-9-5.747h18" />
-                <path d="M4 6h16v12H4z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494m-9-5.747h18" />
-            </svg>
-        ),
+        icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494m-9-5.747h18" /><path d="M4 6h16v12H4z" /></svg> ),
+        accept: '.csv, .xlsx, .xls',
     },
     notes: {
         title: 'Free Text Notes',
         apiFunc: uploadFreeTextNotes,
-        icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-        ),
+        icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg> ),
+        accept: '.csv, .xlsx, .xls',
+    },
+    wifi: {
+        title: 'WiFi Association Logs',
+        apiFunc: uploadWifiLogs,
+        icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.111 16.556A5.5 5.5 0 0112 15a5.5 5.5 0 013.889 1.556M12 12v.01m-3.111 2.944a8.5 8.5 0 016.222 0M4.889 10.444a11.5 11.5 0 0114.222 0" /></svg> ),
+        accept: '.csv, .xlsx, .xls',
+    },
+    faces: { // New config for Face Images
+        title: 'Face Images (ZIP)',
+        apiFunc: uploadFaceImages,
+        icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-fuchsia-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg> ),
+        accept: '.zip', // Specify that this card only accepts .zip files
     },
 };
 
 // Reusable Upload Card Component
-const UploadCard = ({ title, icon, apiFunc }) => {
+const UploadCard = ({ title, icon, apiFunc, accept }) => { // Pass accept prop
     const [file, setFile] = useState(null);
-    const [status, setStatus] = useState('idle'); // idle, uploading, success, error
+    const [status, setStatus] = useState('idle');
     const [message, setMessage] = useState('');
 
     const handleFileChange = (e) => {
@@ -107,7 +85,6 @@ const UploadCard = ({ title, icon, apiFunc }) => {
 
     const handleUpload = async () => {
         if (!file) return;
-
         setStatus('uploading');
         try {
             const response = await apiFunc(file);
@@ -128,7 +105,7 @@ const UploadCard = ({ title, icon, apiFunc }) => {
             <div className="flex flex-col sm:flex-row items-center gap-3">
                 <input
                     type="file"
-                    accept=".csv, .xlsx, .xls"
+                    accept={accept} // Use the accept prop here
                     onChange={handleFileChange}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 cursor-pointer"
                 />
@@ -150,19 +127,14 @@ const UploadCard = ({ title, icon, apiFunc }) => {
     );
 };
 
-
 // Main Page Component
 export default function UploadPage() {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-2xl mx-auto space-y-8">
                 <header className="text-center">
-                    <h1 className="text-4xl font-bold text-gray-800">
-                        Data Upload Center
-                    </h1>
-                    <p className="mt-2 text-lg text-gray-500">
-                        Upload Excel or CSV files to import data into the system.
-                    </p>
+                    <h1 className="text-4xl font-bold text-gray-800">Data Upload Center</h1>
+                    <p className="mt-2 text-lg text-gray-500">Upload data files to import them into the system.</p>
                 </header>
                 <div className="space-y-6">
                     {Object.entries(UPLOAD_CONFIG).map(([key, config]) => (
@@ -171,6 +143,7 @@ export default function UploadPage() {
                             title={config.title}
                             icon={config.icon}
                             apiFunc={config.apiFunc}
+                            accept={config.accept} // Pass the accept prop to the card
                         />
                     ))}
                 </div>
@@ -178,4 +151,3 @@ export default function UploadPage() {
         </div>
     );
 }
-

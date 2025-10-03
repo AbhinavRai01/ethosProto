@@ -1,9 +1,10 @@
 // src/App.js
 
 import { Route, Routes } from "react-router-dom";
-import ViewAndUploadUser from "./pages/ViewAndUploadUser";
+import SearchAndUploadUser from "./pages/SearchAndUploadUser";
 import UploadPage from "./pages/UploadFile";
 import HomePage from "./pages/HomePage"; // 1. Import the new HomePage component
+import EntityProfilePage from "./pages/ViewUser";
 import './App.css'; // Make sure global styles are imported
 
 export default function App() {
@@ -12,8 +13,9 @@ export default function App() {
       <Routes>
         {/* 2. Set HomePage as the default route */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/user" element={<ViewAndUploadUser />} />
+        <Route path="/user" element={<SearchAndUploadUser />} />
         <Route path="/upload" element={<UploadPage />} />
+        <Route path="/user/:entityId" element={<EntityProfilePage />} />
       </Routes>
     </div>
   );

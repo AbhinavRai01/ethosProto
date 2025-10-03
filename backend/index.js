@@ -3,7 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const uploadRoutes = require('./routes/uploadRoutes');
-
+const searchRoutes = require('./routes/searchRoutes');
 const userRoutes = require('./routes/userRoutes');
 
 require("dotenv").config(); // optional, for environment variables
@@ -41,3 +41,4 @@ mongoose.connect(MONGO_URI, {
 // Use user routes
 app.use('/api/users', userRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/search', searchRoutes);

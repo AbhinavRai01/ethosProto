@@ -1,12 +1,17 @@
 const multer = require('multer');
 const xlsx = require('xlsx');
+const fs = require('fs');
+const path = require('path');
+const unzipper = require('unzipper');
 
 // Import all the models
 const Booking = require('../models/labBookings');
 const CctvFrame = require('../models/CctvFrams');
 const LibraryCheckout = require('../models/libraryCheckout');
 const FreeTextNote = require('../models/freeTextNotes');
-const CampusCardSwipe = require('../models/campusCardSwipes'); // Assuming this is the correct path
+const CampusCardSwipe = require('../models/campusCardSwipes'); 
+const WifiLog = require('../models/wifiLogs');
+const FaceImage = require('../models/faceImages');
 
 // Configure multer for file uploads
 const upload = multer({ dest: 'uploads/' });
@@ -23,16 +28,14 @@ const readExcelFile = (filePath) => {
 const uploadCampusCardSwipes = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-        // This now returns data with real JavaScript Date objects
         const jsonData = readExcelFile(req.file.path);
         
         const swipes = jsonData.map((row) => ({
             card_id: row["card_id"] || row["Card ID"],
             timestamp: row["timestamp"] || row["Timestamp"],
-            location_id: row["location_id"] || row["Location ID"] // Added a more likely header name
+            location_id: row["location_id"] || row["Location ID"] 
         }));
 
-        // --- FIX #3: Add validation to ensure data integrity ---
         const validSwipes = swipes.filter(swipe => 
             swipe.timestamp instanceof Date && !isNaN(swipe.timestamp)
         );
@@ -63,11 +66,8 @@ const uploadBookings = async (req, res) => {
         const jsonData = readExcelFile(req.file.path);
 
         const bookings = jsonData.map((row) => {
-            // --- THIS IS THE FIX ---
-            // The code now checks for the correct header "attended (YES/NO)" first.
             const attendedValue = row["attended (YES/NO)"] || row["attended"] || row["Attended"];
             
-            // This logic correctly handles "Yes", "yes", "TRUE", "true", 1, etc.
             const isAttended = ['true', 'yes', '1'].includes(String(attendedValue).toLowerCase());
 
             return {
@@ -79,7 +79,6 @@ const uploadBookings = async (req, res) => {
             };
         });
 
-        // Add validation for bookings
         const validBookings = bookings.filter(b => 
             b.start_time instanceof Date && !isNaN(b.start_time) &&
             b.end_time instanceof Date && !isNaN(b.end_time)
@@ -121,8 +120,26 @@ const uploadCctvFrames = async (req, res) => {
 };
 
 // 4. Library Checkouts
+// const uploadLibraryCheckouts = async (req, res) => {
+//     console.log("Reached uploadLibraryCheckouts controller");
+//     try {
+//         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+//         const jsonData = readExcelFile(req.file.path);
+//         const checkouts = jsonData.map((row) => ({
+//             entity_id: row["entity_id"] || row["Entity ID"],
+//             book_id: row["book_id"] || row["Book ID"],
+//             timestamp: new Date(row["timestamp"] || row["Timestamp"]),
+//         }));
+
+//         await LibraryCheckout.insertMany(checkouts);
+//         res.json({ message: "Library checkouts uploaded successfully", insertedCount: checkouts.length });
+//     } catch (err) {
+//         console.error("❌ Error uploading library checkouts:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// }
 const uploadLibraryCheckouts = async (req, res) => {
-    console.log("Reached uploadLibraryCheckouts controller");
     try {
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
@@ -130,18 +147,44 @@ const uploadLibraryCheckouts = async (req, res) => {
         const checkouts = jsonData.map((row) => ({
             entity_id: row["entity_id"] || row["Entity ID"],
             book_id: row["book_id"] || row["Book ID"],
-            timestamp: new Date(row["timestamp"] || row["Timestamp"]),
+            timestamp: row["timestamp"] || row["Timestamp"],
         }));
+        const validCheckouts = checkouts.filter(checkout =>
+            checkout.timestamp instanceof Date && !isNaN(checkout.timestamp)
+        );
+        if (validCheckouts.length === 0) {
+            return res.status(400).json({ error: "File contains no valid checkout records with readable timestamps." });
+        }
+        await LibraryCheckout.deleteMany({});
+        await LibraryCheckout.insertMany(validCheckouts);
 
-        await LibraryCheckout.insertMany(checkouts);
-        res.json({ message: "Library checkouts uploaded successfully", insertedCount: checkouts.length });
+        res.json({ message: "Library checkouts uploaded successfully", insertedCount: validCheckouts.length });
     } catch (err) {
         console.error("❌ Error uploading library checkouts:", err);
         res.status(500).json({ error: err.message });
     }
-};
+};;
 
 // 5. Free Text Notes
+// const uploadFreeTextNotes = async (req, res) => {
+//     try {
+//         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+        
+//         const jsonData = readExcelFile(req.file.path);
+//         const notes = jsonData.map((row) => ({
+//             entity_id: row["entity_id"] || row["Entity ID"],
+//             category: row["category"] || row["Category"],
+//             text: row["text"] || row["Text"],
+//             timestamp: new Date(row["timestamp"] || row["Timestamp"]),
+//         }));
+
+//         await FreeTextNote.insertMany(notes);
+//         res.json({ message: "Free text notes uploaded successfully", insertedCount: notes.length });
+//     } catch (err) {
+//         console.error("❌ Error uploading free text notes:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// };
 const uploadFreeTextNotes = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
@@ -151,17 +194,91 @@ const uploadFreeTextNotes = async (req, res) => {
             entity_id: row["entity_id"] || row["Entity ID"],
             category: row["category"] || row["Category"],
             text: row["text"] || row["Text"],
-            timestamp: new Date(row["timestamp"] || row["Timestamp"]),
+            timestamp: row["timestamp"] || row["Timestamp"], 
         }));
-
-        await FreeTextNote.insertMany(notes);
-        res.json({ message: "Free text notes uploaded successfully", insertedCount: notes.length });
+        const validNotes = notes.filter(note => 
+            note.timestamp instanceof Date && !isNaN(note.timestamp)
+        );
+        if (validNotes.length === 0) {
+            return res.status(400).json({ error: "File contains no valid note records with readable timestamps." });
+        }
+        await FreeTextNote.deleteMany({});
+        await FreeTextNote.insertMany(validNotes);
+        
+        res.json({ 
+            message: "Free text notes uploaded successfully", 
+            insertedCount: validNotes.length 
+        });
     } catch (err) {
         console.error("❌ Error uploading free text notes:", err);
         res.status(500).json({ error: err.message });
     }
 };
 
+const uploadWifiLogs = async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+        const jsonData = readExcelFile(req.file.path);
+        const logs = jsonData.map((row) => ({
+            device_hash: row["device_hash"] || row["Device Hash"],
+            ap_id: row["ap_id"] || row["AP ID"],
+            timestamp: row["timestamp"] || row["Timestamp"],
+        }));
+        
+        const validLogs = logs.filter(l => l.timestamp instanceof Date && !isNaN(l.timestamp));
+        if (validLogs.length === 0) return res.status(400).json({ error: "No valid WiFi log records found." });
+
+        await WifiLog.deleteMany({});
+        await WifiLog.insertMany(validLogs);
+        res.json({ message: "WiFi logs uploaded successfully", insertedCount: validLogs.length });
+    } catch (err) {
+        console.error("❌ Error uploading WiFi logs:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const uploadFaceImages = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No .zip file uploaded" });
+        }
+        const facesDir = path.join(__dirname, '..', 'public', 'faces');
+        if (!fs.existsSync(facesDir)) {
+            fs.mkdirSync(facesDir, { recursive: true });
+        }
+        const imageRecords = [];
+        await fs.createReadStream(req.file.path)
+            .pipe(unzipper.Parse())
+            .on('entry', function (entry) {
+                const fileName = entry.path;
+                const fileType = entry.type;
+                const fileExtension = path.extname(fileName).toLowerCase();
+
+                if (fileType === 'File' && ['.png', '.jpg', '.jpeg'].includes(fileExtension)) {
+                    const faceId = path.basename(fileName, fileExtension);
+                    const savePath = path.join(facesDir, fileName);
+                    
+                    entry.pipe(fs.createWriteStream(savePath));
+                    
+                    imageRecords.push({
+                        face_id: faceId,
+                        image_path: `/faces/${fileName}` 
+                    });
+                } else {
+                    entry.autodrain();
+                }
+            })
+            .promise();
+        if (imageRecords.length > 0) {
+            await FaceImage.deleteMany({});
+            await FaceImage.insertMany(imageRecords);
+        }
+        res.json({ message: "Face images uploaded successfully", insertedCount: imageRecords.length });
+    } catch (err) {
+        console.error("❌ Error uploading face images:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
 
 module.exports = {
     upload, // The multer middleware
@@ -169,5 +286,7 @@ module.exports = {
     uploadBookings,
     uploadCctvFrames,
     uploadLibraryCheckouts,
-    uploadFreeTextNotes
+    uploadFreeTextNotes,
+    uploadWifiLogs,
+    uploadFaceImages
 };
