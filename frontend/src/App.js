@@ -10,7 +10,7 @@ import './App.css'; // Make sure global styles are imported
 
 export default function App() {
   return (
-    <div className="min-h-screen">
+    <div className="font-inter">
       <Navbar/>
       <Routes>
         {/* 2. Set HomePage as the default route */}
