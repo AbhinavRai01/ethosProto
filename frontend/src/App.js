@@ -5,11 +5,13 @@ import SearchAndUploadUser from "./pages/SearchAndUploadUser";
 import UploadPage from "./pages/UploadFile";
 import HomePage from "./pages/HomePage"; // 1. Import the new HomePage component
 import EntityProfilePage from "./pages/ViewUser";
+import Navbar from "./components/Navbar";
 import './App.css'; // Make sure global styles are imported
 
 export default function App() {
   return (
-    <div>
+    <div className="min-h-screen">
+      <Navbar/>
       <Routes>
         {/* 2. Set HomePage as the default route */}
         <Route path="/" element={<HomePage />} />

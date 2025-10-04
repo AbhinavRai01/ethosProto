@@ -73,7 +73,7 @@ const UPLOAD_CONFIG = {
 };
 
 // Reusable Upload Card Component
-const UploadCard = ({ title, icon, apiFunc, accept }) => { // Pass accept prop
+const UploadCard = ({ title, icon, apiFunc, accept }) => {
     const [file, setFile] = useState(null);
     const [status, setStatus] = useState('idle');
     const [message, setMessage] = useState('');
@@ -97,30 +97,30 @@ const UploadCard = ({ title, icon, apiFunc, accept }) => { // Pass accept prop
     };
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+        <div className="bg-gray-800/50 p-6 rounded-lg border border-gray-700">
             <div className="flex items-center gap-4 mb-4">
                 {icon}
-                <h2 className="text-xl font-semibold text-gray-700">{title}</h2>
+                <h2 className="text-xl font-semibold text-white">{title}</h2>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-3">
                 <input
                     type="file"
-                    accept={accept} // Use the accept prop here
+                    accept={accept}
                     onChange={handleFileChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 cursor-pointer"
+                    className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/30 cursor-pointer"
                 />
                 <button
                     onClick={handleUpload}
                     disabled={!file || status === 'uploading'}
-                    className="w-full sm:w-auto flex-shrink-0 px-5 py-2.5 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                    className="w-full sm:w-auto flex-shrink-0 px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
                 >
                     {status === 'uploading' ? 'Uploading...' : 'Upload'}
                 </button>
             </div>
             {status !== 'idle' && (
                 <div className="mt-4 text-sm">
-                    {status === 'success' && <p className="text-green-600 font-medium">{message}</p>}
-                    {status === 'error' && <p className="text-red-600 font-medium">{message}</p>}
+                    {status === 'success' && <p className="text-green-400 font-medium">{message}</p>}
+                    {status === 'error' && <p className="text-red-400 font-medium">{message}</p>}
                 </div>
             )}
         </div>
@@ -130,11 +130,11 @@ const UploadCard = ({ title, icon, apiFunc, accept }) => { // Pass accept prop
 // Main Page Component
 export default function UploadPage() {
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-2xl mx-auto space-y-8">
+        <div className="min-h-screen bg-gray-900 text-white p-6 sm:p-8 md:p-12">
+            <div className="w-full max-w-3xl mx-auto space-y-8">
                 <header className="text-center">
-                    <h1 className="text-4xl font-bold text-gray-800">Data Upload Center</h1>
-                    <p className="mt-2 text-lg text-gray-500">Upload data files to import them into the system.</p>
+                    <h1 className="text-4xl font-bold text-white">Data Upload Center</h1>
+                    <p className="mt-2 text-lg text-gray-400">Upload data files to import them into the system.</p>
                 </header>
                 <div className="space-y-6">
                     {Object.entries(UPLOAD_CONFIG).map(([key, config]) => (
@@ -143,7 +143,7 @@ export default function UploadPage() {
                             title={config.title}
                             icon={config.icon}
                             apiFunc={config.apiFunc}
-                            accept={config.accept} // Pass the accept prop to the card
+                            accept={config.accept}
                         />
                     ))}
                 </div>

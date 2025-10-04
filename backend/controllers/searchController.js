@@ -21,94 +21,117 @@ async function searchByName(name, page) {
       }
     },
     {
-      $skip: skipAmount
-    },
-    {
-      $limit: PAGE_SIZE
+      $facet: {
+        data: [
+          { $skip: skipAmount },
+          { $limit: PAGE_SIZE }
+        ],
+        totalCount: [
+          { $count: "count" }
+        ]
+      }
     }
   ]);
 
-  return results;
+  return {
+    data: results[0]?.data || [],
+    total: results[0]?.totalCount[0]?.count || 0
+  };
 }
 
 const searchEntitiesByName = async (req, res) => {
-    try {
-        // Get both query and page from the route parameters
-        const { query } = req.params;
-        
-        // CHANGE: Read 'page' from req.params instead of req.query
-        let page = parseInt(req.params.page, 10); 
-        if (isNaN(page) || page < 1) {
-            page = 1; // Default to 1 if not provided in URL or is invalid
-        }
+  try {
+    const { query } = req.params;
 
-        if (!query || query.trim() === "") {
-            return res.status(400).json({ error: "Query parameter is required" });
-        }
-
-        const results = await searchByName(query, page);
-        res.json(results);
-
-    } catch (err) {
-        console.error("❌ Error searching entities:", err);
-        res.status(500).json({ error: err.message });
+    let page = parseInt(req.params.page, 10);
+    if (isNaN(page) || page < 1) {
+      page = 1;
     }
+
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ error: "Query parameter is required" });
+    }
+
+    const { data, total } = await searchByName(query, page);
+    res.json({
+      results: data,
+      totalResults: total,
+      currentPage: page,
+      totalPages: Math.ceil(total / PAGE_SIZE)
+    });
+
+  } catch (err) {
+    console.error("❌ Error searching entities:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 const searchEntityByFaceId = async (req, res) => {
-    try {
-        const { faceId } = req.params;
+  try {
+    const { faceId } = req.params;
 
-        // CHANGE: Read 'page' from req.params instead of req.query
-        let page = parseInt(req.params.page, 10);
-        if (isNaN(page) || page < 1) {
-            page = 1;
-        }
-        const skipAmount = (page - 1) * PAGE_SIZE;
-
-        if (!faceId || faceId.trim() === "") {
-            return res.status(400).json({ error: "Face ID parameter is required" });
-        }
-
-        const entities = await Entity.find({ face_id: faceId })
-            .skip(skipAmount)
-            .limit(PAGE_SIZE);
-            
-        res.json(entities);
-    } catch (err) {
-        console.error("❌ Error searching entity by face ID:", err);
-        res.status(500).json({ error: err.message });
+    let page = parseInt(req.params.page, 10);
+    if (isNaN(page) || page < 1) {
+      page = 1;
     }
-}
+    const skipAmount = (page - 1) * PAGE_SIZE;
+
+    if (!faceId || faceId.trim() === "") {
+      return res.status(400).json({ error: "Face ID parameter is required" });
+    }
+
+    const total = await Entity.countDocuments({ face_id: faceId });
+    const entities = await Entity.find({ face_id: faceId })
+      .skip(skipAmount)
+      .limit(PAGE_SIZE);
+
+    res.json({
+      results: entities,
+      totalResults: total,
+      currentPage: page,
+      totalPages: Math.ceil(total / PAGE_SIZE)
+    });
+
+  } catch (err) {
+    console.error("❌ Error searching entity by face ID:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
 
 const searchEntityByCardId = async (req, res) => {
-    try {
-        const { cardId } = req.params;
+  try {
+    const { cardId } = req.params;
 
-        // CHANGE: Read 'page' from req.params instead of req.query
-        let page = parseInt(req.params.page, 10);
-        if (isNaN(page) || page < 1) {
-            page = 1;
-        }
-        const skipAmount = (page - 1) * PAGE_SIZE;
-
-        if (!cardId || cardId.trim() === "") {
-            return res.status(400).json({ error: "Card ID parameter is required" });
-        }
-
-        const entities = await Entity.find({ card_id: cardId })
-            .skip(skipAmount)
-            .limit(PAGE_SIZE);
-
-        res.json(entities);
-    } catch (err) {
-        console.error("❌ Error searching entity by card ID:", err);
-        res.status(500).json({ error: err.message });
+    let page = parseInt(req.params.page, 10);
+    if (isNaN(page) || page < 1) {
+      page = 1;
     }
-}
+    const skipAmount = (page - 1) * PAGE_SIZE;
+
+    if (!cardId || cardId.trim() === "") {
+      return res.status(400).json({ error: "Card ID parameter is required" });
+    }
+
+    const total = await Entity.countDocuments({ card_id: cardId });
+    const entities = await Entity.find({ card_id: cardId })
+      .skip(skipAmount)
+      .limit(PAGE_SIZE);
+
+    res.json({
+      results: entities,
+      totalResults: total,
+      currentPage: page,
+      totalPages: Math.ceil(total / PAGE_SIZE)
+    });
+
+  } catch (err) {
+    console.error("❌ Error searching entity by card ID:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
 
 module.exports = {
-    searchEntitiesByName,
-    searchEntityByFaceId,
-    searchEntityByCardId
+  searchEntitiesByName,
+  searchEntityByFaceId,
+  searchEntityByCardId
 };
