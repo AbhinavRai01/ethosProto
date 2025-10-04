@@ -1,7 +1,7 @@
   import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-import { searchEntityByCardId,searchEntityByFaceId,searchEntityByName } from '../api/searchApis';
+import { searchEntityByCardId,searchEntityByFaceId,searchEntityByName, searchEntityByHashId } from '../api/searchApis';
 import { getUserById } from '../api/userApi';
 
 const StatusPill = ({ status }) => {
@@ -41,14 +41,17 @@ const handleSearch = async (page = 1) => {
                     response = await searchEntityByCardId(query, page);
                     break;
                 case 'entityId':
-                    const user = await getUserById(query);
-                    response = user ? [user] : [];
+                    response = await getUserById(query);
+                    break;
+                case 'hashId':
+                    response = await searchEntityByHashId(query, page);
                     break;
                 default:
                     response = [];
             }
             setResults(response.results);
             console.log(response);
+            console.log(response.results);
             setCurrentPage(page);
             
             setTotalPages(response.totalPages || 1);
@@ -95,6 +98,7 @@ const handleSearch = async (page = 1) => {
                             <option value="entityId">Entity ID</option>
                             <option value="faceId">Face ID</option>
                             <option value="cardId">Card ID</option>
+                            <option value="hashId">Hash ID</option>
                         </select>
                     </div>
                     <div className="w-full md:flex-grow">

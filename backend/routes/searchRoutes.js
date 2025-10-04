@@ -1,4 +1,4 @@
-const { searchEntitiesByName, searchEntityByFaceId, searchEntityByCardId } = require('../controllers/searchController');
+const { searchEntitiesByName, searchEntityByFaceId, searchEntityByCardId, searchEntityByHashId } = require('../controllers/searchController');
 
 const express = require('express');
 const router = express.Router();
@@ -7,5 +7,6 @@ const router = express.Router();
 router.get('/name/:query/:page', searchEntitiesByName);
 router.get('/face/:faceId/:page', searchEntityByFaceId);
 router.get('/card/:cardId/:page', searchEntityByCardId);
+router.get('/hash/:hashId/:page', searchEntityByHashId);
 
 module.exports = router;

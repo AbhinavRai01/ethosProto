@@ -53,18 +53,36 @@ const uploadEntities = async (req, res) => {
   }
 };
 
+const PAGE_SIZE = 10;
+
 const getUserById = async (req, res) => {
   try {
-    const userId = req.params.userId;
-    console.log("Fetching user with ID:", userId);
-    const user = await Entity.findOne({entity_id: userId});
+    const { entityId } = req.params;
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    let page = 1;
+    if (isNaN(page) || page < 1) {
+      page = 1;
     }
-    res.json(user);
+    const skipAmount = (page - 1) * PAGE_SIZE;
+
+    if (!entityId || entityId.trim() === "") {
+      return res.status(400).json({ error: "Entity ID parameter is required" });
+    }
+
+    const total = await Entity.countDocuments({ entity_id: entityId });
+    const users = await Entity.find({ entity_id: entityId })
+      .skip(skipAmount)
+      .limit(PAGE_SIZE);
+
+    res.json({
+      results: users,
+      totalResults: total,
+      currentPage: page,
+      totalPages: Math.ceil(total / PAGE_SIZE),
+    });
+
   } catch (err) {
-    console.error('❌ Error fetching user by ID:', err);
+    console.error("❌ Error searching user by entity ID:", err);
     res.status(500).json({ error: err.message });
   }
 };

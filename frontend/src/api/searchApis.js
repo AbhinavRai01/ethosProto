@@ -31,3 +31,13 @@ export const searchEntityByCardId = async (cardId, page = 1) => {
         throw error;
     }
 }
+
+export const searchEntityByHashId = async (hashId, page = 1) => {
+    try {
+        const response = await axios.get(`${API_URL}/hash/${hashId}/${page}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error searching entity by hash ID:", error);
+        throw error;
+    }
+}

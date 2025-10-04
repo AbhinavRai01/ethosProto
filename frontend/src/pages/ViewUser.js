@@ -2,9 +2,6 @@ import { React, useState, useEffect } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 
 const { getUserById, getSwipesByEntityId, getCCTVCapturesByEntityId, getBookingsByEntityId, getWifiLogsByEntityId, getCheckoutsByEntityId, getNotesByEntityId, getFacesByEntityId } = require('../api/userApi')
-// --- End of Mock API ---
-
-// --- Helper Components ---
 
 const StatusPill = ({ status }) => {
     const baseClasses = "px-3 py-1 text-xs font-semibold rounded-full inline-block";
@@ -37,10 +34,7 @@ const UserDetails = ({ user, face }) => (
             />
             <div>
                 <h3 className="text-2xl font-bold text-white">{user.name}</h3>
-                <p className="text-md text-gray-300 capitalize">{user.type}</p>
-                <div className="mt-2">
-                    <StatusPill status={user.status} />
-                </div>
+                <p className="text-md text-gray-300 capitalize">{user.role}</p>
             </div>
         </div>
 
@@ -50,7 +44,7 @@ const UserDetails = ({ user, face }) => (
                 <DetailItem label="Student ID" value={user.student_id} />
                 <DetailItem label="Department" value={user.department} />
                 <DetailItem label="Email" value={user.email} />
-                <DetailItem label="Phone" value={user.phone} />
+                <DetailItem label="Device Hash" value={user.device_hash} />
             </div>
         </div>
     </div>
@@ -63,7 +57,7 @@ const DetailItem = ({ label, value }) => (
     </div>
 );
 
-const GenericTable = ({ title, headers, data, renderRow, emptyText }) => {
+const GenericTable = ({ headers, data, renderRow, emptyText }) => {
     if (!data || data.length === 0) return <p className="text-gray-400 text-center py-12">{emptyText}</p>;
     return (
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
@@ -81,7 +75,100 @@ const GenericTable = ({ title, headers, data, renderRow, emptyText }) => {
             </table>
         </div>
     );
-}
+};
+
+const LocationTimeline = ({ events }) => {
+    const [timeframe, setTimeframe] = useState('monthly'); // 'monthly' or 'weekly'
+    const [viewDate, setViewDate] = useState(new Date('2025-09-01T00:00:00Z'));
+
+    const getMonthName = (date) => date.toLocaleString('default', { month: 'long' });
+
+    let filteredEvents = [];
+    let labels = [];
+    let totalDuration = 1;
+
+    if (timeframe === 'monthly') {
+        const startOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+        const endOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0, 23, 59, 59);
+        totalDuration = endOfMonth.getTime() - startOfMonth.getTime();
+        
+        filteredEvents = events.filter(event => {
+            const eventDate = new Date(event.timestamp);
+            return eventDate >= startOfMonth && eventDate <= endOfMonth;
+        });
+
+        // Generate labels for every 5 days
+        const daysInMonth = endOfMonth.getDate();
+        for (let i = 1; i <= daysInMonth; i += 5) {
+            labels.push({ day: i, position: (i - 1) / (daysInMonth - 1) * 100 });
+        }
+    } else { // weekly
+        const endOfWeek = new Date('2025-09-28T23:59:59Z');
+        const startOfWeek = new Date('2025-09-22T00:00:00Z');
+        totalDuration = endOfWeek.getTime() - startOfWeek.getTime();
+
+        filteredEvents = events.filter(event => {
+            const eventDate = new Date(event.timestamp);
+            return eventDate >= startOfWeek && eventDate <= endOfWeek;
+        });
+        
+        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        labels = weekDays.map((day, index) => ({ day, position: (index / 6) * 100 }));
+    }
+
+    const calculatePosition = (timestamp) => {
+        const eventDate = new Date(timestamp);
+        let start;
+        if (timeframe === 'monthly') {
+            start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+        } else {
+             start = new Date('2025-09-22T00:00:00Z');
+        }
+        return ((eventDate.getTime() - start.getTime()) / totalDuration) * 100;
+    };
+    
+    return (
+        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 mt-8">
+            <div className="flex justify-between items-center mb-6">
+                <h4 className="text-xl font-semibold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><path d="M21 21H3V3"/><path d="M12 12L3 20"/><path d="M18 6L3 21"/></svg>
+                    Location Timeline
+                </h4>
+                <div className="flex items-center bg-gray-700 rounded-lg p-1">
+                    <button onClick={() => setTimeframe('monthly')} className={`px-3 py-1 text-sm font-semibold rounded-md transition ${timeframe === 'monthly' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-600'}`}>Monthly</button>
+                    <button onClick={() => setTimeframe('weekly')} className={`px-3 py-1 text-sm font-semibold rounded-md transition ${timeframe === 'weekly' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-600'}`}>Weekly</button>
+                </div>
+            </div>
+
+            <div className="relative h-24">
+                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-600"></div>
+                <div className="relative w-full h-full">
+                    {filteredEvents.map(event => (
+                        <div key={event.id} className="group absolute top-1/2 -translate-y-1/2" style={{ left: `${calculatePosition(event.timestamp)}%` }}>
+                            <div className="w-4 h-4 bg-gray-900 border-2 border-purple-500 rounded-full cursor-pointer"></div>
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 p-2 bg-gray-900 border border-gray-600 rounded-lg text-xs text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <p className="font-bold text-white capitalize">{event.type.replace(/_/g, ' ')}</p>
+                                <p className="text-gray-300">{event.details}</p>
+                                <p className="text-gray-400 mt-1">{new Date(event.timestamp).toLocaleString()}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div className="absolute top-full left-0 w-full flex justify-between mt-2">
+                    {labels.map(label => (
+                        <span key={label.day} className="text-xs text-gray-400" style={{ position: 'absolute', left: `${label.position}%`, transform: 'translateX(-50%)' }}>
+                            {label.day}
+                        </span>
+                    ))}
+                </div>
+            </div>
+             <p className="text-center text-sm text-gray-400 mt-10">
+                {timeframe === 'monthly' ? `Showing activity for ${getMonthName(viewDate)} 2025` : 'Showing activity for the last week of September'}
+            </p>
+        </div>
+    );
+};
+
 
 // --- Main Page Component ---
 export default function EntityProfilePage() {
@@ -97,6 +184,7 @@ export default function EntityProfilePage() {
     const [checkouts, setCheckouts] = useState([]);
     const [status, setStatus] = useState('loading');
     const [activeTab, setActiveTab] = useState('details');
+    const [timelineEvents, setTimelineEvents] = useState([]);
 
     useEffect(() => {
         if (!entityId) {
@@ -121,7 +209,7 @@ export default function EntityProfilePage() {
                     getFacesByEntityId(entityId),
                 ]);
 
-                setUser(userResponse);
+                setUser(userResponse.results[0] || null);
                 setSwipes(swipesResponse);
                 setCaptures(capturesResponse);
                 setBookings(bookingsResponse);
@@ -139,20 +227,35 @@ export default function EntityProfilePage() {
         fetchAllData();
     }, [entityId]);
 
+    // Process all fetched data into a unified timeline format
+    useEffect(() => {
+        const events = [];
+        swipes.forEach(s => events.push({ id: s._id, type: 'Card Swipe', details: s.location_id, timestamp: s.timestamp }));
+        captures.forEach(c => events.push({ id: c._id, type: 'CCTV Capture', details: c.location_id, timestamp: c.timestamp }));
+        bookings.forEach(b => events.push({ id: b._id, type: 'Room Booking', details: b.room_id, timestamp: b.start_time }));
+        logs.forEach(l => events.push({ id: l._id, type: 'WiFi Log', details: `AP: ${l.ap_id}`, timestamp: l.timestamp }));
+        checkouts.forEach(co => events.push({ id: co._id, type: 'Library Checkout', details: co.book_id, timestamp: co.timestamp }));
+        
+        events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        setTimelineEvents(events);
+
+    }, [swipes, captures, bookings, logs, checkouts, notes]);
+
+
     const renderContent = () => {
         switch (activeTab) {
             case 'details':
                 return <UserDetails user={user} face={face} />;
             case 'swipes':
-                return <GenericTable title="Card Swipes" headers={["Location", "Timestamp"]} data={swipes} emptyText="No card swipes found." renderRow={(item) => (
+                return <GenericTable headers={["Location", "Timestamp"]} data={swipes} emptyText="No card swipes found." renderRow={(item) => (
                     <tr key={item._id} className="hover:bg-gray-700/50"><td className="px-6 py-4 text-white">{item.location_id?.replace(/_/g, ' ')}</td><td className="px-6 py-4 text-gray-300">{new Date(item.timestamp).toLocaleString()}</td></tr>
                 )} />;
             case 'checkouts':
-                 return <GenericTable title="Library Issues" headers={["Book ID", "Timestamp"]} data={checkouts} emptyText="No library checkouts found." renderRow={(item) => (
+                 return <GenericTable headers={["Book ID", "Timestamp"]} data={checkouts} emptyText="No library checkouts found." renderRow={(item) => (
                     <tr key={item._id} className="hover:bg-gray-700/50"><td className="px-6 py-4 text-white">{item.book_id}</td><td className="px-6 py-4 text-gray-300">{new Date(item.timestamp).toLocaleString()}</td></tr>
                 )} />;
             case 'bookings':
-                return <GenericTable title="Lab Sessions" headers={["Room ID", "Start Time", "End Time", "Attended"]} data={bookings} emptyText="No lab sessions or bookings found." renderRow={(item) => (
+                return <GenericTable headers={["Room ID", "Start Time", "End Time", "Attended"]} data={bookings} emptyText="No lab sessions or bookings found." renderRow={(item) => (
                     <tr key={item._id} className="hover:bg-gray-700/50">
                         <td className="px-6 py-4 text-white">{item.room_id}</td>
                         <td className="px-6 py-4 text-gray-300">{new Date(item.start_time).toLocaleString()}</td>
@@ -161,11 +264,11 @@ export default function EntityProfilePage() {
                     </tr>
                 )} />;
             case 'cctv':
-                return <GenericTable title="CCTV Captures" headers={["Location", "Timestamp"]} data={captures} emptyText="No CCTV captures found." renderRow={(item) => (
+                return <GenericTable headers={["Location", "Timestamp"]} data={captures} emptyText="No CCTV captures found." renderRow={(item) => (
                     <tr key={item._id} className="hover:bg-gray-700/50"><td className="px-6 py-4 text-white">{item.location_id?.replace(/_/g, ' ')}</td><td className="px-6 py-4 text-gray-300">{new Date(item.timestamp).toLocaleString()}</td></tr>
                 )} />;
             case 'wifi':
-                return <GenericTable title="Wifi Logs" headers={["Device Hash", "AP ID", "Timestamp"]} data={logs} emptyText="No WiFi logs found." renderRow={(item) => (
+                return <GenericTable headers={["Device Hash", "AP ID", "Timestamp"]} data={logs} emptyText="No WiFi logs found." renderRow={(item) => (
                     <tr key={item._id} className="hover:bg-gray-700/50">
                         <td className="px-6 py-4 text-white">{item.device_hash}</td>
                         <td className="px-6 py-4 text-gray-300">{item.ap_id}</td>
@@ -173,7 +276,7 @@ export default function EntityProfilePage() {
                     </tr>
                 )} />;
             case 'notes':
-                return <GenericTable title="Notes" headers={["Category", "Text", "Timestamp"]} data={notes} emptyText="No notes found." renderRow={(item) => (
+                return <GenericTable headers={["Category", "Text", "Timestamp"]} data={notes} emptyText="No notes found." renderRow={(item) => (
                     <tr key={item._id} className="hover:bg-gray-700/50">
                         <td className="px-6 py-4 text-white">{item.category}</td>
                         <td className="px-6 py-4 text-gray-300 whitespace-normal">{item.text}</td>
@@ -188,7 +291,6 @@ export default function EntityProfilePage() {
     return (
         <div className="min-h-screen bg-gray-900 text-white p-6 sm:p-8 md:p-12">
             <div className="w-full max-w-5xl mx-auto">
-                 {/* Breadcrumbs */}
                  <div className="mb-6 text-sm text-gray-400">
                     <RouterLink to="/search" className="hover:text-white">Users</RouterLink>
                     <span className="mx-2">/</span>
@@ -212,7 +314,11 @@ export default function EntityProfilePage() {
                                 <TabButton name="notes" activeTab={activeTab} setActiveTab={setActiveTab}>Notes ({notes.length})</TabButton>
                             </nav>
                         </div>
-                        <div>{renderContent()}</div>
+                        <div>
+                            {renderContent()}
+                            {/* The timeline is always visible below the tab content */}
+                            {timelineEvents.length > 0 && <LocationTimeline events={timelineEvents} />}
+                        </div>
                     </div>
                 )}
             </div>

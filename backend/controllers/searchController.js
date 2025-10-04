@@ -130,8 +130,41 @@ const searchEntityByCardId = async (req, res) => {
   }
 };
 
+const searchEntityByHashId = async (req, res) => {
+  try {
+    const { hashId } = req.params;
+
+    let page = parseInt(req.params.page, 10);
+    if (isNaN(page) || page < 1) {
+      page = 1;
+    }
+    const skipAmount = (page - 1) * PAGE_SIZE;
+
+    if (!hashId || hashId.trim() === "") {
+      return res.status(400).json({ error: "hash ID parameter is required" });
+    }
+
+    const total = await Entity.countDocuments({ device_hash: hashId });
+    const entities = await Entity.find({ device_hash: hashId })
+      .skip(skipAmount)
+      .limit(PAGE_SIZE);
+
+    res.json({
+      results: entities,
+      totalResults: total,
+      currentPage: page,
+      totalPages: Math.ceil(total / PAGE_SIZE)
+    });
+
+  } catch (err) {
+    console.error("❌ Error searching entity by hash ID:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   searchEntitiesByName,
   searchEntityByFaceId,
-  searchEntityByCardId
+  searchEntityByCardId,
+  searchEntityByHashId
 };
