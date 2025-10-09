@@ -41,3 +41,13 @@ export const searchEntityByHashId = async (hashId, page = 1) => {
         throw error;
     }
 }
+
+export const searchEntitybyImage = async (imageFile, page = 1) => {
+    try {
+        const response = await axios.get(`${API_URL}/image/${page}`);
+        return response.data;
+    } catch(error) {
+        console.error("Error searching Entity by image:", error);
+        throw error;
+    }
+}

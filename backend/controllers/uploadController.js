@@ -12,6 +12,7 @@ const FreeTextNote = require('../models/freeTextNotes');
 const CampusCardSwipe = require('../models/campusCardSwipes'); 
 const WifiLog = require('../models/wifiLogs');
 const FaceImage = require('../models/faceImages');
+const FaceEmbedding = require('../models/faceEmbeddings');
 
 // Configure multer for file uploads
 const upload = multer({ dest: 'uploads/' });
@@ -280,6 +281,40 @@ const uploadFaceImages = async (req, res) => {
     }
 };
 
+const uploadFaceEmbeddings = async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+        const jsonData = readExcelFile(req.file.path);
+        
+        const embeddings = jsonData.map((row) => {
+            const embeddingString = row["embedding"] || row["Embedding"];
+            let embeddingArray = [];
+            if (embeddingString) {
+                try {
+                    embeddingArray = JSON.parse(embeddingString);
+                } catch (e) {
+                    console.error(`Failed to parse embedding for face_id: ${row["face_id"]}`);
+                }
+            }
+            return {
+                face_id: row["face_id"] || row["Face ID"],
+                embedding: embeddingArray
+            };
+        });
+
+        const validEmbeddings = embeddings.filter(e => e.face_id && Array.isArray(e.embedding) && e.embedding.length > 0);
+        if (validEmbeddings.length === 0) return res.status(400).json({ error: "No valid face embedding records found." });
+
+        await FaceEmbedding.deleteMany({});
+        await FaceEmbedding.insertMany(validEmbeddings);
+        res.json({ message: "Face embeddings uploaded successfully", insertedCount: validEmbeddings.length });
+    } catch (err) {
+        console.error("❌ Error uploading face embeddings:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
 module.exports = {
     upload, // The multer middleware
     uploadCampusCardSwipes,
@@ -288,5 +323,6 @@ module.exports = {
     uploadLibraryCheckouts,
     uploadFreeTextNotes,
     uploadWifiLogs,
-    uploadFaceImages
+    uploadFaceImages,
+    uploadFaceEmbeddings
 };

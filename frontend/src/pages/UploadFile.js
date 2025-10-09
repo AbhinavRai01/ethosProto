@@ -3,7 +3,6 @@ import axios from 'axios';
 import { uploadZippedImages } from '../firebase/firebaseApis';
 import { storage } from '../firebase/firebaseConfig';
 
-// API Service Logic
 const API_URL = 'http://localhost:3000/api/uploads';
 
 const uploadFile = async (file, endpoint) => {
@@ -27,8 +26,8 @@ const uploadLibraryCheckouts = (file) => uploadFile(file, '/library');
 const uploadFreeTextNotes = (file) => uploadFile(file, '/notes');
 const uploadWifiLogs = (file) => uploadFile(file, '/wifi');
 const uploadFaceImages = (file) =>{console.log("reached 1"); uploadZippedImages({zipFile: file,storage}) }// New API function for face images
+const uploadFaceEmbeddings = (file) => uploadFile(file, '/embeddings');
 
-// Main UI Configuration
 const UPLOAD_CONFIG = {
     swipes: {
         title: 'Campus Card Swipes',
@@ -66,15 +65,20 @@ const UPLOAD_CONFIG = {
         icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.111 16.556A5.5 5.5 0 0112 15a5.5 5.5 0 013.889 1.556M12 12v.01m-3.111 2.944a8.5 8.5 0 016.222 0M4.889 10.444a11.5 11.5 0 0114.222 0" /></svg> ),
         accept: '.csv, .xlsx, .xls',
     },
-    faces: { // New config for Face Images
+    faces: {
         title: 'Face Images (ZIP)',
         apiFunc: uploadFaceImages,
         icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-fuchsia-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg> ),
-        accept: '.zip', // Specify that this card only accepts .zip files
+        accept: '.zip',
+    },
+    embeddings: {
+        title: 'Face Embeddings',
+        apiFunc: uploadFaceEmbeddings,
+        icon: ( <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5-2.98-.566M17.657 18.657A8 8 0 016.343 7.343m11.314 11.314a8 8 0 00-11.314-11.314" /></svg> ),
+        accept: '.csv, .xlsx, .xls',
     },
 };
 
-// Reusable Upload Card Component
 const UploadCard = ({ title, icon, apiFunc, accept }) => {
     const [file, setFile] = useState(null);
     const [status, setStatus] = useState('idle');
@@ -129,7 +133,6 @@ const UploadCard = ({ title, icon, apiFunc, accept }) => {
     );
 };
 
-// Main Page Component
 export default function UploadPage() {
     return (
         <div className="min-h-screen bg-gray-900 text-white p-6 sm:p-8 md:p-12">
@@ -153,3 +156,4 @@ export default function UploadPage() {
         </div>
     );
 }
+
