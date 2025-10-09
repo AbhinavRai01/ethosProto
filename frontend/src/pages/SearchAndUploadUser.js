@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { 
     searchEntityByCardId,
@@ -95,6 +96,7 @@ const ImageUploader = ({ imageFile, setImageFile }) => {
 
 
 export default function SearchPage() {
+    const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const [imageFile, setImageFile] = useState(null);
     const [searchType, setSearchType] = useState('name');
@@ -142,7 +144,14 @@ export default function SearchPage() {
                 case 'faceImage':
                     const formData = new FormData();
                     formData.append('image', imageFile);
-                    response = await searchEntityByFaceImage(formData, page);
+                    response = await searchEntityByFaceImage(formData.get('image'));
+
+                    if (response && response.entityId){
+                    navigate(`/user/${response.entityId}`);
+                    return;
+                    } else {
+                        response = { results: [], totalPages: 1, totalResults: 0 };
+                    }
                     break;
                 default:
                     response = { results: [], totalPages: 1, totalResults: 0 };

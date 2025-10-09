@@ -8,14 +8,14 @@ import ast
 
 detector = MTCNN()
 embedder = FaceNet()
-df = pd.read_csv("Test_Dataset/face_embeddings.csv")
+df = pd.read_csv("datasets/face_embeddings.csv")
 
 def get_face_embedding(image_path):
     try:
         image = Image.open(image_path)
     except FileNotFoundError:
         return None
-
+    
     image = image.convert('RGB')
     pixels = asarray(image)
     
@@ -84,8 +84,8 @@ def identify_entity_from_image(image_path):
     if match_id:
         entity_id = match_id.replace('F', 'E', 1)
         return entity_id
-    else:
-        return f"No confident match found (best score: {score:.4f})"
+    
+    return f"No confident match found (best score: {score:.4f})"
 
 # image_to_test = r'C:\Users\Lenovo\Downloads\test2.jpg'
 # result = identify_entity_from_image(image_to_test)

@@ -31,13 +31,15 @@ export const fetchPredictions = async (entityId, date) => {
 
 export const searchEntityByFaceImage = async (imageFile) => {
     try {
+
+        if (!imageFile) {
+            console.error("No image file provided");
+            return null;
+        }
+
         const formData = new FormData();
         formData.append('image', imageFile);
-        const response = await axios.post(`${API_URL}search_by_face`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
+        const response = await axios.post(`${API_URL}image-search`, formData);
         console.log("Face search successful:", response.data);
         return response.data;
     } catch (error) {
