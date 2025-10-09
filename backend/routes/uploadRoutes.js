@@ -10,7 +10,8 @@ const {
     uploadLibraryCheckouts,
     uploadFreeTextNotes,
     uploadWifiLogs,
-    uploadFaceImages
+    uploadFaceImages,
+    uploadFaceEmbeddings
 } = require('../controllers/uploadController');
 
 // --- Define API routes for uploading each type of Excel file ---
@@ -36,5 +37,7 @@ router.post('/notes', upload.single('file'), uploadFreeTextNotes);
 router.post('/wifi', upload.single('file'), uploadWifiLogs);
 
 router.post('/faces', upload.single('file'), uploadFaceImages);
+
+router.post('/embeddings', upload.single('file'), uploadFaceEmbeddings);
 
 module.exports = router;

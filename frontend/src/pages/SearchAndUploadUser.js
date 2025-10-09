@@ -1,7 +1,7 @@
   import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-import { searchEntityByCardId,searchEntityByFaceId,searchEntityByName, searchEntityByHashId } from '../api/searchApis';
+import { searchEntityByCardId,searchEntityByFaceId,searchEntityByName, searchEntityByHashId, searchEntitybyImage } from '../api/searchApis';
 import { getUserById } from '../api/userApi';
 
 const StatusPill = ({ status }) => {
@@ -45,6 +45,9 @@ const handleSearch = async (page = 1) => {
                     break;
                 case 'hashId':
                     response = await searchEntityByHashId(query, page);
+                    break;
+                case 'Image':
+                    response = await searchEntitybyImage(query, page);
                     break;
                 default:
                     response = [];

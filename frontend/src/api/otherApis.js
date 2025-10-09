@@ -56,3 +56,7 @@ export const uploadLibraryCheckouts = (file) => {
 export const uploadFreeTextNotes = (file) => {
     return uploadFile(file, '/notes');
 };
+
+export const uploadFaceEmbeddings = (file) => {
+    return uploadFile(file, '/embeddings');
+}
