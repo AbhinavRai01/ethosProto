@@ -1,5 +1,5 @@
 import axios from 'axios';
-const API_URL = 'http://localhost:3000/api/users'; // Adjust the URL as needed
+const API_URL = 'http://localhost:5000/api/users'; // Adjust the URL as needed
 
 // Function to upload an Excel file
 export const uploadEntities = async (file) => {
