@@ -1,17 +1,12 @@
 import { React, useState, useEffect } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
-
+import { LocationTimeline } from '../components/LocationTimeline';
+import { fetchPredictions } from '../api/flaskApis';
+import PredictionsTimeline from '../components/PredictionsTimeline';
+import { useMemo } from 'react';
+import { getDownloadURL,ref,getStorage } from 'firebase/storage';
+import { storage } from '../firebase/firebaseConfig';
 const { getUserById, getSwipesByEntityId, getCCTVCapturesByEntityId, getBookingsByEntityId, getWifiLogsByEntityId, getCheckoutsByEntityId, getNotesByEntityId, getFacesByEntityId } = require('../api/userApi')
-
-const StatusPill = ({ status }) => {
-    const baseClasses = "px-3 py-1 text-xs font-semibold rounded-full inline-block";
-    const statusClasses = {
-        'Active': 'bg-green-500/30 text-green-300',
-        'On Leave': 'bg-yellow-500/30 text-yellow-300',
-        'Inactive': 'bg-red-500/30 text-red-300'
-    };
-    return <span className={`${baseClasses} ${statusClasses[status] || 'bg-gray-500/30 text-gray-300'}`}>{status}</span>;
-};
 
 const TabButton = ({ name, activeTab, setActiveTab, children }) => (
     <button
@@ -24,38 +19,67 @@ const TabButton = ({ name, activeTab, setActiveTab, children }) => (
     </button>
 );
 
-const UserDetails = ({ user, face }) => (
-    <div>
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex items-center gap-6">
-            <img 
-                src={face?.image_path || 'https://placehold.co/100x100/2d3748/a0aec0?text=User'} 
-                alt={`Face of ${user.name}`}
-                className="rounded-full h-24 w-24 object-cover border-2 border-gray-600"
-            />
-            <div>
-                <h3 className="text-2xl font-bold text-white">{user.name}</h3>
-                <p className="text-md text-gray-300 capitalize">{user.role}</p>
-            </div>
-        </div>
-
-        <div className="mt-8">
-            <h4 className="text-xl font-semibold text-white mb-4">Personal Details</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <DetailItem label="Student ID" value={user.student_id} />
-                <DetailItem label="Department" value={user.department} />
-                <DetailItem label="Email" value={user.email} />
-                <DetailItem label="Device Hash" value={user.device_hash} />
-            </div>
-        </div>
-    </div>
-);
-
 const DetailItem = ({ label, value }) => (
-    <div>
-        <p className="text-sm font-medium text-gray-400">{label}</p>
-        <p className="text-base font-semibold text-white break-words">{value || 'N/A'}</p>
+    <div className="bg-gray-800 p-4 rounded-lg">
+        <p className="text-sm text-gray-400">{label}</p>
+        <p className="text-white font-medium break-words">{value || 'N/A'}</p>
     </div>
 );
+
+const UserDetails = ({ user }) => { // Use curly braces for a function body
+    const [imageUrl, setImageUrl] = useState(''); // Start with an empty or placeholder URL
+
+    useEffect(() => {
+        // Make sure user and user.face_id exist before trying to fetch
+        if (user && user.face_id) {
+            // 1. Create a reference to the file
+            const imageRef = ref(storage, `images/${user.face_id}.jpg`);
+
+            // 2. Get the download URL from the reference
+            getDownloadURL(imageRef)
+                .then((url) => {
+                    setImageUrl(url); // Set the HTTPS URL to state
+                })
+                .catch((error) => {
+                    console.error("Error fetching image URL:", error);
+                    // Optionally, set a fallback image URL here
+                    // setImageUrl('path/to/default/avatar.png');
+                });
+        }
+    }, [user]); // Rerun the effect if the user prop changes
+
+    // Handle case where user data is not yet available
+    if (!user) {
+        return <div>Loading user details...</div>;
+    }
+
+    return (
+        <div>
+            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex items-center gap-6">
+                <img 
+                    // 3. Use the state variable for the src
+                    src={imageUrl || 'https://placehold.co/96x96/4A5568/E2E8F0?text=...'} 
+                    alt={`Face of ${user.name}`}
+                    className="rounded-full h-24 w-24 object-cover border-2 border-gray-600"
+                />
+                <div>
+                    <h3 className="text-2xl font-bold text-white">{user.name}</h3>
+                    <p className="text-md text-gray-300 capitalize">{user.role}</p>
+                </div>
+            </div>
+
+            <div className="mt-8">
+                <h4 className="text-xl font-semibold text-white mb-4">Personal Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <DetailItem label="Entity ID" value={user.entity_id} />
+                    <DetailItem label="Department" value={user.department} />
+                    <DetailItem label="Email" value={user.email} />
+                    <DetailItem label="Device Hash" value={user.device_hash} />
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const GenericTable = ({ headers, data, renderRow, emptyText }) => {
     if (!data || data.length === 0) return <p className="text-gray-400 text-center py-12">{emptyText}</p>;
@@ -77,99 +101,122 @@ const GenericTable = ({ headers, data, renderRow, emptyText }) => {
     );
 };
 
-const LocationTimeline = ({ events }) => {
-    const [timeframe, setTimeframe] = useState('monthly'); // 'monthly' or 'weekly'
-    const [viewDate, setViewDate] = useState(new Date('2025-09-01T00:00:00Z'));
+const PredictionsComponent = ({ entityId }) => {
+    const [selectedDate, setSelectedDate] = useState('2025-08-27');
+    const [predictionData, setPredictionData] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const getMonthName = (date) => date.toLocaleString('default', { month: 'long' });
-
-    let filteredEvents = [];
-    let labels = [];
-    let totalDuration = 1;
-
-    if (timeframe === 'monthly') {
-        const startOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-        const endOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0, 23, 59, 59);
-        totalDuration = endOfMonth.getTime() - startOfMonth.getTime();
-        
-        filteredEvents = events.filter(event => {
-            const eventDate = new Date(event.timestamp);
-            return eventDate >= startOfMonth && eventDate <= endOfMonth;
-        });
-
-        // Generate labels for every 5 days
-        const daysInMonth = endOfMonth.getDate();
-        for (let i = 1; i <= daysInMonth; i += 5) {
-            labels.push({ day: i, position: (i - 1) / (daysInMonth - 1) * 100 });
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        if (!selectedDate) {
+            alert("Please select a date.");
+            return;
         }
-    } else { // weekly
-        const endOfWeek = new Date('2025-09-28T23:59:59Z');
-        const startOfWeek = new Date('2025-09-22T00:00:00Z');
-        totalDuration = endOfWeek.getTime() - startOfWeek.getTime();
 
-        filteredEvents = events.filter(event => {
-            const eventDate = new Date(event.timestamp);
-            return eventDate >= startOfWeek && eventDate <= endOfWeek;
-        });
-        
-        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        labels = weekDays.map((day, index) => ({ day, position: (index / 6) * 100 }));
-    }
+        setIsLoading(true);
+        setPredictionData(null); // Clear previous results
 
-    const calculatePosition = (timestamp) => {
-        const eventDate = new Date(timestamp);
-        let start;
-        if (timeframe === 'monthly') {
-            start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-        } else {
-             start = new Date('2025-09-22T00:00:00Z');
+        try {
+            const [year, month, day] = selectedDate.split('-');
+            const formattedDate = `${day}-${month}-${year}`;
+            
+            const response = await fetchPredictions(entityId, formattedDate);
+            setPredictionData(response);
+
+        } catch (error) {
+            console.error("Failed to fetch predictions:", error);
+            alert("Could not fetch predictions. Please check the console.");
+        } finally {
+            setIsLoading(false);
         }
-        return ((eventDate.getTime() - start.getTime()) / totalDuration) * 100;
     };
-    
+
+    const timelineItems = useMemo(() => {
+        if (!predictionData) return [];
+        
+        const { time, location, probability } = predictionData;
+        
+        // Filter out times where probability is 0 or location is 'UNKNOWN' if desired
+        // return Object.keys(time)
+        //     .filter(key => probability[key] > 0 && location[key] !== 'UNKNOWN')
+        //     .map(key => ({
+        //         id: key,
+        //         time: time[key],
+        //         location: location[key],
+        //         probability: probability[key]
+        //     }));
+
+        return Object.keys(time).map(key => ({
+            id: key,
+            time: time[key],
+            location: location[key],
+            probability: probability[key]
+        }));
+    }, [predictionData]);
+
     return (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 mt-8">
-            <div className="flex justify-between items-center mb-6">
-                <h4 className="text-xl font-semibold text-white flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><path d="M21 21H3V3"/><path d="M12 12L3 20"/><path d="M18 6L3 21"/></svg>
-                    Location Timeline
-                </h4>
-                <div className="flex items-center bg-gray-700 rounded-lg p-1">
-                    <button onClick={() => setTimeframe('monthly')} className={`px-3 py-1 text-sm font-semibold rounded-md transition ${timeframe === 'monthly' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-600'}`}>Monthly</button>
-                    <button onClick={() => setTimeframe('weekly')} className={`px-3 py-1 text-sm font-semibold rounded-md transition ${timeframe === 'weekly' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-600'}`}>Weekly</button>
-                </div>
+        // Adjusted padding and background to match your screenshot
+        <div className="pb-4 font-sans text-gray-100"> 
+            <div className=" mx-auto bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-700"> {/* Darker card */}
+                <h2 className="text-xl font-bold text-gray-50 mb-4">Get Daily Prediction</h2> {/* Lighter text */}
+                <form onSubmit={handleSubmit} className="flex items-center space-x-4">
+                    <label htmlFor="prediction-date" className="font-medium text-gray-300"> {/* Lighter label */}
+                        Select Date:
+                    </label>
+                    <input
+                        type="date"
+                        id="prediction-date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        min="2025-08-27"
+                        max="2025-09-27"
+                        required
+                        // Darker input field
+                        className="p-2 border border-gray-600 rounded-md bg-gray-800 text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <button 
+                        type="submit" 
+                        disabled={isLoading}
+                        // Button style matching your timeline purple/indigo
+                        className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed"
+                    >
+                        {isLoading ? 'Fetching...' : 'Fetch Prediction'}
+                    </button>
+                </form>
             </div>
 
-            <div className="relative h-24">
-                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-600"></div>
-                <div className="relative w-full h-full">
-                    {filteredEvents.map(event => (
-                        <div key={event.id} className="group absolute top-1/2 -translate-y-1/2" style={{ left: `${calculatePosition(event.timestamp)}%` }}>
-                            <div className="w-4 h-4 bg-gray-900 border-2 border-purple-500 rounded-full cursor-pointer"></div>
-                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 p-2 bg-gray-900 border border-gray-600 rounded-lg text-xs text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                <p className="font-bold text-white capitalize">{event.type.replace(/_/g, ' ')}</p>
-                                <p className="text-gray-300">{event.details}</p>
-                                <p className="text-gray-400 mt-1">{new Date(event.timestamp).toLocaleString()}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                <div className="absolute top-full left-0 w-full flex justify-between mt-2">
-                    {labels.map(label => (
-                        <span key={label.day} className="text-xs text-gray-400" style={{ position: 'absolute', left: `${label.position}%`, transform: 'translateX(-50%)' }}>
-                            {label.day}
-                        </span>
-                    ))}
-                </div>
-            </div>
-             <p className="text-center text-sm text-gray-400 mt-10">
-                {timeframe === 'monthly' ? `Showing activity for ${getMonthName(viewDate)} 2025` : 'Showing activity for the last week of September'}
-            </p>
+            {/* Conditionally render the Timeline */}
+            {isLoading && <p className="text-center text-gray-400 mt-8">Loading...</p>}
+            {predictionData && <PredictionsTimeline items={timelineItems} />}
         </div>
     );
 };
 
+const AlertBox = ({ message }) => (
+    <div
+        className="mt-6 flex items-center gap-3 rounded-md bg-red-100 p-4 text-red-700 border-l-4 border-red-500"
+        role="alert"
+    >
+        {/* Icon */}
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+        >
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+        </svg>
 
+        {/* Message */}
+        <p className="font-semibold">{message}</p>
+    </div>
+);
 // --- Main Page Component ---
 export default function EntityProfilePage() {
     const { entityId } = useParams();
@@ -185,6 +232,7 @@ export default function EntityProfilePage() {
     const [status, setStatus] = useState('loading');
     const [activeTab, setActiveTab] = useState('details');
     const [timelineEvents, setTimelineEvents] = useState([]);
+    const [alert,setAlert]=useState(false);
 
     useEffect(() => {
         if (!entityId) {
@@ -218,6 +266,18 @@ export default function EntityProfilePage() {
                 setNotes(notesResponse);
                 setFace(faceResponse[0] || null);
                 setStatus('success');
+
+                const lastDay = "09-25-2025";
+                const response = await fetchPredictions(entityId, lastDay);
+
+                console.log(response);
+
+                //check if all probabilities in last 12 hours is less than 0.5
+                const { probability } = response;
+                const probValues = Object.values(probability).slice(-12);
+                const allLowProb = probValues.every(p => p < 0.5);
+                setAlert(allLowProb);
+                console.log("All probabilities in last 12 hours less than 0.5:", allLowProb);
             } catch (error) {
                 console.error("Error fetching entity data:", error);
                 setStatus('error');
@@ -319,6 +379,10 @@ export default function EntityProfilePage() {
                             {/* The timeline is always visible below the tab content */}
                             {timelineEvents.length > 0 && <LocationTimeline events={timelineEvents} />}
                         </div>
+                        {alert && <AlertBox message="Alert: All predicted probabilities in the last 12 hours are below 0.5!" />}
+                        <div className="mt-12">
+                            <PredictionsComponent entityId={entityId} />
+                            </div>
                     </div>
                 )}
             </div>

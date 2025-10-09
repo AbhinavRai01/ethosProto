@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { uploadZippedImages } from '../firebase/firebaseApis';
+import { storage } from '../firebase/firebaseConfig';
 
 // API Service Logic
 const API_URL = 'http://localhost:3000/api/uploads';
@@ -24,7 +26,7 @@ const uploadCctvFrames = (file) => uploadFile(file, '/cctv');
 const uploadLibraryCheckouts = (file) => uploadFile(file, '/library');
 const uploadFreeTextNotes = (file) => uploadFile(file, '/notes');
 const uploadWifiLogs = (file) => uploadFile(file, '/wifi');
-const uploadFaceImages = (file) => uploadFile(file, '/faces'); // New API function for face images
+const uploadFaceImages = (file) =>{console.log("reached 1"); uploadZippedImages({zipFile: file,storage}) }// New API function for face images
 
 // Main UI Configuration
 const UPLOAD_CONFIG = {

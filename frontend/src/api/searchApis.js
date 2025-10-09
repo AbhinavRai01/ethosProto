@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/search";
+const API_URL = "http://localhost:5000/api/search";
 
 export const searchEntityByName = async (query, page = 1) => {
     try {

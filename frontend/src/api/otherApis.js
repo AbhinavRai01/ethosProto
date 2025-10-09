@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // The base URL for your upload API endpoints.
 // Adjust this to your actual server URL in a production environment.
-const API_URL = 'http://localhost:3000/api/uploads';
+const API_URL = 'http://localhost:5000/api/uploads';
 
 /**
  * A generic helper function to upload a file to a specific endpoint.
@@ -56,3 +56,4 @@ export const uploadLibraryCheckouts = (file) => {
 export const uploadFreeTextNotes = (file) => {
     return uploadFile(file, '/notes');
 };
+
