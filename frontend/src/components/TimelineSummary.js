@@ -29,6 +29,7 @@ const TimelineSummary = ({ predictions, userName }) => {
         const userQuery = `Summarize the following predicted schedule for user ${userName}: ${formattedData}`;
         
         const apiKey = process.env.REACT_APP_GOOGLE_API_KEY;
+        console.log("Using API Key:", apiKey);
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
         try {

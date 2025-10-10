@@ -1,10 +1,16 @@
 import pandas as pd
+import json
 
-INPUT_FILE = 'Test_Dataset/cctv_frames.csv'
-OUTPUT_FILE = 'cctv_frames_cleaned.csv'
+def CCTVCleaner(input_json):
+    if isinstance(input_json, str):
+        df = pd.read_json(input_json)
+    else:
+        df = pd.DataFrame(input_json)
+        
+    df_cleaned = df.dropna(subset=['face_id'])
 
-df = pd.read_csv(INPUT_FILE)
-
-df_cleaned = df.dropna(subset=['face_id'])
-
-df_cleaned.to_csv(OUTPUT_FILE, index=False)
+    df_cleaned['timestamp'] = pd.to_datetime(df_cleaned['timestamp'])
+    df_cleaned['timestamp'] = df_cleaned['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    output_json = df_cleaned.to_json(orient='records', indent=4)
+    return output_json

@@ -43,21 +43,18 @@ export async function uploadZippedImages({ zipFile, storage, destinationFolder =
 
     // Process each image entry to create an upload promise.
     for (const zipEntry of imageEntries) {
-        // FIX: Add a guard to ensure the zip entry has a valid filename.
-        // This prevents errors if the zip file contains corrupted entries with no name.
         if (!zipEntry.name || typeof zipEntry.name !== 'string') {
             console.warn('Skipping an invalid or unnamed entry in the zip file:', zipEntry);
-            continue; // Skip this iteration and move to the next file.
+            continue; 
         }
 
         const uploadPromise = zipEntry.async('blob').then(blob => {
             const storageRef = ref(storage, `${destinationFolder}/${zipEntry.name}`);
-            
-            // The actual upload call
+        
             return uploadBytes(storageRef, blob).then(snapshot => {
                 uploadedCount++;
                 onProgress(`(${uploadedCount}/${imageEntries.length}) Uploaded ${zipEntry.name}`);
-                return getDownloadURL(snapshot.ref); // This promise resolves with the URL
+                return getDownloadURL(snapshot.ref);
             });
         });
         uploadPromises.push(uploadPromise);

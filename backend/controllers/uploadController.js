@@ -3,6 +3,7 @@ const xlsx = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 const unzipper = require('unzipper');
+const dotenv = require('dotenv');
 
 // Import all the models
 const Booking = require('../models/labBookings');
@@ -106,7 +107,19 @@ const uploadCctvFrames = async (req, res) => {
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
         const jsonData = readExcelFile(req.file.path);
-        const frames = jsonData.map((row) => ({
+        const response = await fetch(`${process.env.FLASK_API}/cctv-cleaner`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jsonData)
+        });
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error("Flask API Error Response:", errorBody);
+            throw new Error(`Flask API call failed with status: ${response.status}`);
+        }
+        const cleanedData = await response.json();
+
+        const frames = cleanedData.map((row) => ({
             location_id: row["location_id"] || row["Location ID"],
             timestamp: new Date(row["timestamp"] || row["Timestamp"]),
             face_id: row["face_id"] || row["Face ID"]
