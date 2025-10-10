@@ -158,7 +158,7 @@ const PredictionsComponent = ({ entityId }) => {
         // Adjusted padding and background to match your screenshot
         <div className="pb-4 font-sans text-gray-100"> 
             <div className=" mx-auto bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-700"> {/* Darker card */}
-                <h2 className="text-xl font-bold text-gray-50 mb-4">Get Daily Prediction</h2> {/* Lighter text */}
+                <h2 className="text-xl font-semibold text-gray-50 mb-4">Get Daily Prediction</h2> {/* Lighter text */}
                 <form onSubmit={handleSubmit} className="flex items-center space-x-4">
                     <label htmlFor="prediction-date" className="font-medium text-gray-300"> {/* Lighter label */}
                         Select Date:
@@ -270,8 +270,6 @@ export default function EntityProfilePage() {
                 const lastDay = "09-25-2025";
                 const response = await fetchPredictions(entityId, lastDay);
 
-                console.log(response);
-
                 //check if all probabilities in last 12 hours is less than 0.5
                 const { probability } = response;
                 const probValues = Object.values(probability).slice(-12);
@@ -286,6 +284,15 @@ export default function EntityProfilePage() {
 
         fetchAllData();
     }, [entityId]);
+
+    useEffect(() => {
+        console.log("swipes:",swipes);
+        console.log("captures:",captures);
+        console.log("bookings:",bookings);
+        console.log("logs:",logs);
+        console.log("checkouts:",checkouts);
+        console.log("notes:",notes);
+    }, [swipes, captures, bookings, logs, checkouts, notes]);
 
     // Process all fetched data into a unified timeline format
     useEffect(() => {

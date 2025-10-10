@@ -86,7 +86,3 @@ def identify_entity_from_image(image_path):
         return entity_id
     
     return f"No confident match found (best score: {score:.4f})"
-
-# image_to_test = r'C:\Users\Lenovo\Downloads\test2.jpg'
-# result = identify_entity_from_image(image_to_test)
-# print(result)
