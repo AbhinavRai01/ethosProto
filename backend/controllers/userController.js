@@ -94,7 +94,7 @@ const getSwipesByEntityId = async (req, res) => {
 
     console.log("Card ID:", cardId);
     const swipes = await campusCardSwipes.find({ card_id: cardId.card_id });
-    //console.log("Swipes found:", swipes);
+    console.log("Swipes found:", swipes);
     res.json(swipes);
   } catch (err) {
     console.error('❌ Error fetching swipes by entity ID:', err);
