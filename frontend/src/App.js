@@ -1,24 +1,56 @@
-// src/App.js
-
 import { Route, Routes } from "react-router-dom";
 import SearchAndUploadUser from "./pages/SearchAndUploadUser";
 import UploadPage from "./pages/UploadFile";
-import HomePage from "./pages/HomePage"; // 1. Import the new HomePage component
+import HomePage from "./pages/HomePage";
 import EntityProfilePage from "./pages/ViewUser";
+import LoginPage from "./pages/loginPage";
 import Navbar from "./components/Navbar";
-import './App.css'; // Make sure global styles are imported
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./pages/ProtectedRoute";
+import './App.css';
 
 export default function App() {
   return (
     <div className="font-inter">
-      <Navbar/>
-      <Routes>
-        {/* 2. Set HomePage as the default route */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/user" element={<SearchAndUploadUser />} />
-        <Route path="/upload" element={<UploadPage />} />
-        <Route path="/user/:entityId" element={<EntityProfilePage />} />
-      </Routes>
+      <AuthProvider>
+        <Navbar />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/user" 
+            element={
+              <ProtectedRoute>
+                <SearchAndUploadUser />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/upload" 
+            element={
+              <ProtectedRoute>
+                <UploadPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/user/:entityId" 
+            element={
+              <ProtectedRoute>
+                <EntityProfilePage />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+      </AuthProvider>
     </div>
   );
 }

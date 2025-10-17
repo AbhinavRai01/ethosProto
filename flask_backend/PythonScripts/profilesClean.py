@@ -1,75 +1,70 @@
 import pandas as pd
 import re
+import json
 
-INPUT_FILE = 'Test_Dataset/student or staff profiles.csv'
-OUTPUT_FILE = 'student_or_staff_profiles_cleaned.csv'
+def ProfilesCleaner(input_data):
+    # Create DataFrame directly from the Python list/dict provided by Flask
+    df = pd.DataFrame(input_data)
+    df_cleaned = df.copy()
 
-df = pd.read_csv(INPUT_FILE)
-df_cleaned = df.copy()
+    def extract_card_number(card_id):
+        match = re.search(r'\d+', str(card_id))
+        return int(match.group()) if match else 0
 
-def extract_card_number(card_id):
-    match = re.search(r'\d+', str(card_id))
-    return int(match.group()) if match else 0
+    card_numbers = df['card_id'].apply(extract_card_number)
+    max_card_number = card_numbers.max() if not card_numbers.empty else 0
 
-card_numbers = df['card_id'].apply(extract_card_number)
-max_card_number = card_numbers.max()
+    duplicated_mask = df_cleaned['card_id'].duplicated(keep='first')
+    duplicated_indices = df_cleaned[duplicated_mask].index
 
-duplicated_mask = df_cleaned['card_id'].duplicated(keep='first')
-duplicated_indices = df_cleaned[duplicated_mask].index
+    next_card_number = max_card_number + 1
 
-next_card_number = max_card_number + 1
+    for idx in duplicated_indices:
+        new_card_id = f"C{next_card_number}"
+        df_cleaned.loc[idx, 'card_id'] = new_card_id    
+        next_card_number += 1
 
-for idx in duplicated_indices:
-    old_card_id = df_cleaned.loc[idx, 'card_id']
-    new_card_id = f"C{next_card_number}"
-    df_cleaned.loc[idx, 'card_id'] = new_card_id    
-    next_card_number += 1
+    def extract_student_number(student_id):
+        match = re.search(r'\d+', str(student_id))
+        return int(match.group()) if match else 0
 
-def extract_student_number(student_id):
-    match = re.search(r'\d+', str(student_id))
-    return int(match.group()) if match else 0
+    student_numbers = df['student_id'].dropna().apply(extract_student_number)
+    max_student_number = student_numbers.max() if not student_numbers.empty else 0
 
-card_numbers = df['student_id'].apply(extract_student_number)
-max_card_number = card_numbers.max()
+    duplicated_mask = df_cleaned['student_id'].duplicated(keep='first')
+    duplicates_no_null = duplicated_mask & df_cleaned['student_id'].notna()
+    duplicated_indices = df_cleaned[duplicates_no_null].index
 
-duplicated_mask = df_cleaned['student_id'].duplicated(keep='first')
-duplicates_no_null = duplicated_mask & df_cleaned['student_id'].notna()
+    next_student_number = max_student_number + 1
 
-duplicated_indices = df_cleaned[duplicates_no_null].index
+    for idx in duplicated_indices:
+        new_student_id = f"S{next_student_number}"
+        df_cleaned.loc[idx, 'student_id'] = new_student_id    
+        next_student_number += 1
 
-next_card_number = max_card_number + 1
+    def extract_staff_number(staff_id):
+        match = re.search(r'\d+', str(staff_id))
+        return int(match.group()) if match else 0
 
-for idx in duplicated_indices:
-    old_card_id = df_cleaned.loc[idx, 'student_id']
-    new_card_id = f"S{next_card_number}"
-    df_cleaned.loc[idx, 'student_id'] = new_card_id    
-    next_card_number += 1
+    staff_numbers = df['staff_id'].dropna().apply(extract_staff_number)
+    max_staff_number = staff_numbers.max() if not staff_numbers.empty else 0
+    
+    duplicated_mask = df_cleaned['staff_id'].duplicated(keep='first')
+    duplicates_no_null = duplicated_mask & df_cleaned['staff_id'].notna()
+    duplicated_indices = df_cleaned[duplicates_no_null].index
 
-def extract_staff_number(staff_id):
-    match = re.search(r'\d+', str(staff_id))
-    return int(match.group()) if match else 0
+    next_staff_number = max_staff_number + 1
 
-card_numbers = df['staff_id'].apply(extract_staff_number)
-max_card_number = card_numbers.max()
+    for idx in duplicated_indices:
+        new_staff_id = f"T{next_staff_number}"
+        df_cleaned.loc[idx, 'staff_id'] = new_staff_id    
+        next_staff_number += 1
 
-duplicated_mask = df_cleaned['staff_id'].duplicated(keep='first')
-duplicates_no_null = duplicated_mask & df_cleaned['staff_id'].notna()
-duplicated_indices = df_cleaned[duplicates_no_null].index
+    df_cleaned['entity_id_numeric'] = df_cleaned['entity_id'].str.replace('E', '').astype(int)
+    mask = df_cleaned['entity_id_numeric'] >= 5000
+    df_cleaned.loc[mask, 'face_id'] = df_cleaned.loc[mask, 'entity_id'].str.replace('E', 'F', 1)
+    df_cleaned = df_cleaned.drop(columns=['entity_id_numeric'])
 
-next_card_number = max_card_number + 1
-
-for idx in duplicated_indices:
-    old_card_id = df_cleaned.loc[idx, 'staff_id']
-    new_card_id = f"T{next_card_number}"
-    df_cleaned.loc[idx, 'staff_id'] = new_card_id    
-    next_card_number += 1
-
-df_cleaned['entity_id_numeric'] = df_cleaned['entity_id'].str.replace('E', '').astype(int)
-
-mask = df_cleaned['entity_id_numeric'] >= 5000
-
-df_cleaned.loc[mask, 'face_id'] = df_cleaned.loc[mask, 'entity_id'].str.replace('E', 'F', 1)
-
-df_cleaned = df_cleaned.drop(columns=['entity_id_numeric'])
-
-df_cleaned.to_csv(OUTPUT_FILE, index=False)
+    # Convert the cleaned DataFrame back to a JSON string to be returned by the API
+    output_json = df_cleaned.to_json(orient='records')
+    return output_json

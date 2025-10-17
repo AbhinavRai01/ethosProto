@@ -60,3 +60,14 @@ export const uploadFreeTextNotes = (file) => {
 export const uploadFaceEmbeddings = (file) => {
     return uploadFile(file, '/embeddings');
 }
+
+export const loginDo = async (username, password) => {
+    try {
+        const response = await axios.post('http://localhost:5000/api/sec/login', { username, password });
+        return response.data; // Assuming the response contains the token and user info
+    }
+    catch (error) {
+        console.error('Error during login:', error.response ? error.response.data : error.message);
+        throw error;
+    }
+};

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 // This is the SVG icon, kept inside the component for simplicity.
 const LogoIcon = () => (
@@ -11,22 +12,26 @@ const LogoIcon = () => (
   </svg>
 );
 
-const Header = () => {
-  // A placeholder URL for the avatar image
-  const avatarUrl = 'https://i.imgur.com/3Y2g6a2.png';
+const Navbar = () => {
+  // Call the useAuth hook inside the functional component.
+  const { logout } = useAuth();
+  
+  const handleLogout = (e) => {
+    e.preventDefault();
+    logout();
+  };
 
   return (
-    // The bottom border has been changed from border-b to border-b-2 to make it thicker.
     <header className="flex items-center justify-between px-6 py-4 border-b-2 border-gray-700/20 bg-gray-900 text-white">
       {/* Left Side: Logo and Brand Name */}
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 text-purple-500">
           <LogoIcon />
         </div>
-        <h1 className="text-xl font-bold">Campus Security</h1>
+        <h1 className="text-xl font-bold">TrustUsBro</h1>
       </div>
 
-      {/* Right Side: Navigation and Profile */}
+      {/* Right Side: Navigation */}
       <div className="flex items-center gap-6">
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-400">
           <Link to="/" className="hover:text-purple-500 transition-colors">
@@ -35,17 +40,16 @@ const Header = () => {
           <Link to="/user" className="hover:text-purple-500 transition-colors">
             Search
           </Link>
-          <Link to="#" className="hover:text-purple-500 transition-colors">
-            Alerts
-          </Link>
           <Link to="/upload" className="hover:text-purple-500 transition-colors">
             Upload
           </Link>
+          <button onClick={handleLogout} className="hover:text-purple-500 transition-colors">
+            Logout
+          </button>
         </nav>
-        
       </div>
     </header>
   );
 };
 
-export default Header;
+export default Navbar;

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const express = require('express');
+const dotenv = require('dotenv');
 const multer = require("multer");
 const xlsx = require("xlsx");
 const Entity = require('../models/entityModel');
@@ -25,8 +26,18 @@ const uploadEntities = async (req, res) => {
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet);
 
+    const response = await fetch(process.env.FLASK_API + 'profile-cleaner', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(jsonData)
+    });
+
+    const cleanedData = await response.json();
+
     // 2. Transform Excel rows → Entity objects
-    const entities = jsonData.map((row) => ({
+    const entities = cleanedData.map((row) => ({
       entity_id: row["entity_id"] || row["Entity ID"], // handles different header naming
       name: row["name"] || row["Name"],
       role: row["role"] || row["Role"],

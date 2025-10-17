@@ -3,7 +3,7 @@ import axios from 'axios';
 import { uploadZippedImages } from '../firebase/firebaseApis';
 import { storage } from '../firebase/firebaseConfig';
 
-const API_URL = 'http://localhost:3000/api/uploads';
+const API_URL = 'http://localhost:5000/api/uploads';
 
 const uploadFile = async (file, endpoint) => {
     const formData = new FormData();

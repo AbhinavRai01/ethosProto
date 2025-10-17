@@ -5,6 +5,7 @@ const cors = require("cors");
 const uploadRoutes = require('./routes/uploadRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const userRoutes = require('./routes/userRoutes');
+const loginRoutes = require('./routes/loginRoutes');
 
 require("dotenv").config(); // optional, for environment variables
 
@@ -42,3 +43,4 @@ mongoose.connect(MONGO_URI, {
 app.use('/api/users', userRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/sec', loginRoutes);

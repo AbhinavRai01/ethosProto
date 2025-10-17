@@ -5,6 +5,8 @@ from flask import Blueprint, jsonify, request, url_for, current_app
 from PythonScripts import Prob
 from PythonScripts import FaceDetection
 from werkzeug.utils import secure_filename
+from PythonScripts import cctvClean
+from PythonScripts import profilesClean
 import os
 
 # It's good practice to define constants here, but the main app will configure them.
@@ -60,3 +62,16 @@ def imageSearch():
             return jsonify({"error": f"An error occurred during face detection: {str(e)}"}), 500
     else:
         return jsonify({"error": "File type not allowed"}), 400
+    
+
+@routes.route('/cctv-cleaner',methods = ['POST'])
+def CctvClean():
+    data = request.get_json()
+    output = cctvClean.CCTVCleaner(data)
+    return output
+
+@routes.route('/profile-cleaner', methods=['POST'])
+def profileClean():
+    data = request.get_json()
+    output = profilesClean.ProfilesCleaner(data)
+    return output
