@@ -1,5 +1,5 @@
 import express from 'express';
-export const router = express.Router();
+const router = express.Router();
 
 import { uploadEntities, getSwipesByEntityId, getUserById, getCCTVCapturesByEntityId, getBookingsByEntityId, getDeviceByEntityId, getCheckoutsByEntityId, getNotesByEntityId, getFacesByEntityId } from '../controllers/userController.js';
 
@@ -15,3 +15,5 @@ router.get('/:entityId/device', getDeviceByEntityId);
 router.get('/:entityId/checkouts', getCheckoutsByEntityId);
 router.get('/:entityId/notes', getNotesByEntityId);
 router.get('/:entityId/face', getFacesByEntityId);
+
+export default router;

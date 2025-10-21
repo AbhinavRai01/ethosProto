@@ -44,19 +44,20 @@
 // app.use('/api/uploads', uploadRoutes);
 // app.use('/api/search', searchRoutes);
 // app.use('/api/sec', loginRoutes);
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const http = require('http');
-const { Server } = require("socket.io");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import http from 'http';
+import { Server } from "socket.io";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const uploadRoutes = require('./routes/uploadRoutes');
-const searchRoutes = require('./routes/searchRoutes');
-const userRoutes = require('./routes/userRoutes');
-const loginRoutes = require('./routes/loginRoutes');
+import uploadRoutes from './routes/uploadRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import loginRoutes from './routes/loginRoutes.js';
+import dialogflowRoutes from './routes/dialogflowRoutes.js'
 
-require("dotenv").config();
+import 'dotenv/config';
 
 const app = express();
 const httpServer = http.createServer(app);

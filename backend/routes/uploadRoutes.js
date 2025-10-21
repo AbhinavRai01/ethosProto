@@ -1,5 +1,5 @@
 import express from 'express';
-export const router = express.Router();
+const router = express.Router();
 
 // Import the controller functions and the multer middleware from your controller file
 import {
@@ -41,3 +41,5 @@ router.post('/wifi', upload.single('file'), uploadWifiLogs);
 router.post('/faces', upload.single('file'), uploadFaceImages);
 
 router.post('/embeddings', upload.single('file'), uploadFaceEmbeddings);
+
+export default router
