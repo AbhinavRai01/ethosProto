@@ -1,9 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:5000');
 
 const TimelineSummary = ({ predictions, userName }) => {
     const [summary, setSummary] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    useEffect(() => {
+        socket.on('summary_chunk', (data) => {
+            setIsLoading(false); 
+            setSummary(prevSummary => prevSummary + data.text);
+        });
+
+        socket.on('stream_end', () => {
+            setIsLoading(false);
+        });
+        
+        socket.on('stream_error', (data) => {
+            setError(data.error);
+            setIsLoading(false);
+        });
+
+        return () => {
+            socket.off('summary_chunk');
+            socket.off('stream_end');
+            socket.off('stream_error');
+        };
+    }, []);
 
     const formatPredictionsForApi = (preds) => {
         let text = '';
@@ -17,56 +42,13 @@ const TimelineSummary = ({ predictions, userName }) => {
         return text;
     };
 
-    const handleSummarize = async () => {
+    const handleSummarize = () => {
         setIsLoading(true);
         setError(null);
         setSummary('');
 
         const formattedData = formatPredictionsForApi(predictions);
-
-        const systemPrompt = `You are a campus security analyst. Your task is to summarize a user's predicted daily schedule based on probabilistic data. The summary should be a concise, professional paragraph of 5-6 sentences. Focus on the most likely locations during the three main periods of the day: Morning, Daytime, and Evening. Do not mention the probabilities, just the locations.`;
-        
-        const userQuery = `Summarize the following predicted schedule for user ${userName}: ${formattedData}`;
-        
-        const apiKey = process.env.REACT_APP_GOOGLE_API_KEY;
-        console.log("Using API Key:", apiKey);
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-        try {
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-            };
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.json();
-                console.error("API Error Response:", errorBody);
-                throw new Error(`API call failed with status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            
-            if (text) {
-                setSummary(text);
-            } else {
-                console.error("No text in API response:", result);
-                throw new Error("No summary was generated.");
-            }
-
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
+        socket.emit('summarize_stream', { formattedData, userName });
     };
 
     return (
@@ -92,4 +74,6 @@ const TimelineSummary = ({ predictions, userName }) => {
 };
 
 export default TimelineSummary;
+
+
 

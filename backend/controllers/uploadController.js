@@ -133,26 +133,6 @@ const uploadCctvFrames = async (req, res) => {
     }
 };
 
-// 4. Library Checkouts
-// const uploadLibraryCheckouts = async (req, res) => {
-//     console.log("Reached uploadLibraryCheckouts controller");
-//     try {
-//         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-//         const jsonData = readExcelFile(req.file.path);
-//         const checkouts = jsonData.map((row) => ({
-//             entity_id: row["entity_id"] || row["Entity ID"],
-//             book_id: row["book_id"] || row["Book ID"],
-//             timestamp: new Date(row["timestamp"] || row["Timestamp"]),
-//         }));
-
-//         await LibraryCheckout.insertMany(checkouts);
-//         res.json({ message: "Library checkouts uploaded successfully", insertedCount: checkouts.length });
-//     } catch (err) {
-//         console.error("❌ Error uploading library checkouts:", err);
-//         res.status(500).json({ error: err.message });
-//     }
-// }
 const uploadLibraryCheckouts = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
@@ -179,26 +159,6 @@ const uploadLibraryCheckouts = async (req, res) => {
     }
 };;
 
-// 5. Free Text Notes
-// const uploadFreeTextNotes = async (req, res) => {
-//     try {
-//         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-        
-//         const jsonData = readExcelFile(req.file.path);
-//         const notes = jsonData.map((row) => ({
-//             entity_id: row["entity_id"] || row["Entity ID"],
-//             category: row["category"] || row["Category"],
-//             text: row["text"] || row["Text"],
-//             timestamp: new Date(row["timestamp"] || row["Timestamp"]),
-//         }));
-
-//         await FreeTextNote.insertMany(notes);
-//         res.json({ message: "Free text notes uploaded successfully", insertedCount: notes.length });
-//     } catch (err) {
-//         console.error("❌ Error uploading free text notes:", err);
-//         res.status(500).json({ error: err.message });
-//     }
-// };
 const uploadFreeTextNotes = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });

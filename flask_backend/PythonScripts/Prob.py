@@ -32,56 +32,30 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def predict_person_timeline(entity_id, day_of_week):
-    """
-    Predicts a person's location timeline for a specific day of the week.
-    
-    Parameters:
-    -----------
-    entity_id : str
-        The entity ID to predict (e.g., 'E104567')
-    day_of_week : str
-        Day to predict ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
-    
-    Returns:
-    --------
-    timeline_df : DataFrame
-        DataFrame with columns: time, location, probability, p1_prob, p2_prob, method, alternatives
-    metadata : dict
-        Dictionary containing analysis metadata (total_logs, low_activity, locations_visited, etc.)
-    """
     
     # Fixed parameters
     START_DATE = '2025-08-25'
     END_DATE = '2025-09-27'
     TIME_INTERVAL_MINUTES = 60
     LOW_ACTIVITY_THRESHOLD = 2
-    HOSTEL_BOOST_FACTOR = 0.3
-    PERSONAL_PATTERN_WEIGHT = 0.6
+    HOSTEL_BOOST_FACTOR = 0.4
+    PERSONAL_PATTERN_WEIGHT = 1
     
-    # ============================================================================
-    # LOCATION NORMALIZATION MAPPING
-    # ============================================================================
     LOCATION_MAPPING = {
-        'AUD': 'AUDITORIUM',
-        'AUDITORIUM': 'AUDITORIUM',
-        'ADMIN': 'ADMIN_LOBBY',
-        'ADMIN_LOBBY': 'ADMIN_LOBBY',
-        'CAF': 'CAF',
-        'CAF_01': 'CAF',
-        'LIB_ENT': 'LIBRARY',
-        'LIB': 'LIBRARY',
-        'LIBRARY': 'LIBRARY',
-        'HOSTEL': 'HOSTEL',
-        'HOSTEL_GATE': 'HOSTEL',
-        'LAB': 'LAB',
-        'LAB_101': 'LAB_101',
-        'ENG': 'ENG',
-        'LAB_305': 'LAB_305',
-        'GYM': 'GYM',
-        'SEM_01': 'SEMINAR_ROOM',
-        'SEMINAR ROOM': 'SEMINAR_ROOM',
-        'LAB_102': 'LAB_102',
-    }
+            'AUD': 'AUDITORIUM', 'AUDITORIUM': 'AUDITORIUM', 'AP_AUD_1': 'AUDITORIUM','AP_AUD_2': 'AUDITORIUM',
+            'AP_AUD_3': 'AUDITORIUM', 'AP_AUD_4': 'AUDITORIUM', 'AP_AUD_5': 'AUDITORIUM', 'AP_ADMIN_1':'ADMIN_LOBBY',
+            'AP_ADMIN_2':'ADMIN_LOBBY', 'AP_ADMIN_3':'ADMIN_LOBBY', 'AP_ADMIN_4':'ADMIN_LOBBY',
+            'AP_ADMIN_5':'ADMIN_LOBBY', 'ADMIN': 'ADMIN_LOBBY', 'ADMIN_LOBBY': 'ADMIN_LOBBY', 'AP_CAF_1': 'CAF',
+            'AP_CAF_2': 'CAF', 'AP_CAF_3': 'CAF', 'AP_CAF_4': 'CAF', 'AP_CAF_5': 'CAF', 'CAF': 'CAF', 'CAF_01': 'CAF',
+            'AP_LIB_1': 'LIBRARY', 'AP_LIB_2': 'LIBRARY', 'AP_LIB_3': 'LIBRARY', 'AP_LIB_4': 'LIBRARY',
+            'AP_LIB_5': 'LIBRARY', 'LIB_ENT': 'LIBRARY', 'LIB': 'LIBRARY', 'LIBRARY': 'LIBRARY', 'AP_HOSTEL_1': 'HOSTEL',
+            'AP_HOSTEL_2': 'HOSTEL', 'AP_HOSTEL_3': 'HOSTEL', 'AP_HOSTEL_4': 'HOSTEL', 'AP_HOSTEL_5': 'HOSTEL',
+            'HOSTEL': 'HOSTEL', 'HOSTEL_GATE': 'HOSTEL', 'AP_LAB_1': 'LAB', 'AP_LAB_2': 'LAB', 'AP_LAB_3': 'LAB',
+            'AP_LAB_4': 'LAB', 'AP_LAB_5': 'LAB', 'LAB': 'LAB', 'LAB_101': 'LAB_101', 'AP_ENG_1': 'ENG', 'AP_ENG_2': 'ENG',
+            'AP_ENG_3': 'ENG', 'AP_ENG_4': 'ENG', 'AP_ENG_5': 'ENG', 'ENG': 'ENG', 'LAB_305': 'LAB_305', 'GYM': 'GYM',
+            'SEM_01': 'SEMINAR_ROOM', 'SEMINAR ROOM': 'SEMINAR_ROOM', 'LAB_102': 'LAB', 'ROOM_A1': 'SEMINAR_ROOM',
+            'ROOM_A2': 'SEMINAR_ROOM',
+        }
     
     TEXT_TO_LOCATION_MAPPING = {
         'Confirmed attendance for robotics workshop.': 'LAB',
@@ -459,23 +433,6 @@ def predict_person_timeline(entity_id, day_of_week):
     
     timeline_df = pd.DataFrame(timeline)
     
-    # ============================================================================
-    # CREATE METADATA
-    # ============================================================================
-    # metadata = {
-    #     'entity_id': entity_id,
-    #     'day_of_week': day_of_week,
-    #     'department': target_department,
-    #     'role': target_role,
-    #     'total_logs': total_person_logs,
-    #     'target_day_logs': len(target_day_data),
-    #     'is_low_activity': is_low_activity,
-    #     'locations_visited': sorted(person_locations) if person_locations else [],
-    #     'excluded_locations': sorted(all_locations - person_locations) if person_locations else [],
-    #     'similar_people_count': len(similar_profiles),
-    #     'high_confidence_slots': len(timeline_df[timeline_df['probability'] >= 0.5])
-    # }
-
     json_data = timeline_df.to_json()
     
     return json_data

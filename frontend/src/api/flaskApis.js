@@ -29,6 +29,19 @@ export const fetchPredictions = async (entityId, date) => {
     }
 };
 
+export const fetchLocationDensity = async (dayofWeek) => {
+    try {
+        const response = await axios.post(`${API_URL}locations`, {
+            day_of_week: dayofWeek
+        });
+        console.log("Location density fetch successful:", response.data);
+        return response.data;
+    } catch(error) {
+        console.error("Error fetching location density:", error);
+        return null;
+    }
+}
+
 export const searchEntityByFaceImage = async (imageFile) => {
     try {
 
