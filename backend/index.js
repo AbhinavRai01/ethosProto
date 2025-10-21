@@ -1,13 +1,16 @@
 // index.js
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const uploadRoutes = require('./routes/uploadRoutes');
-const searchRoutes = require('./routes/searchRoutes');
-const userRoutes = require('./routes/userRoutes');
-const loginRoutes = require('./routes/loginRoutes');
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
 
-require("dotenv").config(); // optional, for environment variables
+import {router as uploadRoutes} from './routes/uploadRoutes.js';
+import {router as searchRoutes} from './routes/searchRoutes.js';
+import {router as loginRoutes} from './routes/loginRoutes.js';
+import {router as dialogflowRoutes} from './routes/dialogflowRoutes.js';
+import {router as userRoutes} from './routes/userRoutes.js';
+
+import dotenv from 'dotenv';
+dotenv.config();
 
 
 const app = express();
@@ -44,3 +47,4 @@ app.use('/api/users', userRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/sec', loginRoutes);
+app.use('/api/dialogflow', dialogflowRoutes);

@@ -7,6 +7,7 @@ import LoginPage from "./pages/loginPage";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./pages/ProtectedRoute";
+import QueryChat from "./pages/QueryChat";
 import './App.css';
 
 export default function App() {
@@ -46,6 +47,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <EntityProfilePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/chat" 
+            element={
+              <ProtectedRoute>
+                <QueryChat />
               </ProtectedRoute>
             } 
           />

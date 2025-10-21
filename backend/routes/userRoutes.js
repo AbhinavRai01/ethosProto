@@ -1,9 +1,9 @@
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+export const router = express.Router();
 
-const { uploadEntities, getSwipesByEntityId, getUserById, getCCTVCapturesByEntityId, getBookingsByEntityId, getDeviceByEntityId, getCheckoutsByEntityId, getNotesByEntityId, getFacesByEntityId } = require('../controllers/userController');
+import { uploadEntities, getSwipesByEntityId, getUserById, getCCTVCapturesByEntityId, getBookingsByEntityId, getDeviceByEntityId, getCheckoutsByEntityId, getNotesByEntityId, getFacesByEntityId } from '../controllers/userController.js';
 
-const multer = require("multer");
+import multer from 'multer';
 const upload = multer({ dest: 'uploads/' });
 // Route to upload entities via Excel file
 router.post('/upload', upload.single('file'), uploadEntities);
@@ -15,5 +15,3 @@ router.get('/:entityId/device', getDeviceByEntityId);
 router.get('/:entityId/checkouts', getCheckoutsByEntityId);
 router.get('/:entityId/notes', getNotesByEntityId);
 router.get('/:entityId/face', getFacesByEntityId);
-
-module.exports = router;
