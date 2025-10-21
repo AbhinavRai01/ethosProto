@@ -138,4 +138,9 @@ mongoose.connect(MONGO_URI, {
     console.error("MongoDB connection error:", err);
 });
 
-
+// Use user routes
+app.use('/api/users', userRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/sec', loginRoutes);
+app.use('/api/dialogflow', dialogflowRoutes);

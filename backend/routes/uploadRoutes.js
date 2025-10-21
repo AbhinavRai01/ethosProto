@@ -1,9 +1,8 @@
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+export const router = express.Router();
 
 // Import the controller functions and the multer middleware from your controller file
-const {
-    upload,
+import {
     uploadCampusCardSwipes,
     uploadBookings,
     uploadCctvFrames,
@@ -12,7 +11,10 @@ const {
     uploadWifiLogs,
     uploadFaceImages,
     uploadFaceEmbeddings
-} = require('../controllers/uploadController');
+} from '../controllers/uploadController.js';
+
+import multer from 'multer';
+const upload = multer({ dest: 'uploads/' });
 
 // --- Define API routes for uploading each type of Excel file ---
 
@@ -39,5 +41,3 @@ router.post('/wifi', upload.single('file'), uploadWifiLogs);
 router.post('/faces', upload.single('file'), uploadFaceImages);
 
 router.post('/embeddings', upload.single('file'), uploadFaceEmbeddings);
-
-module.exports = router;
