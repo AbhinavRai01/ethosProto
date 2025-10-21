@@ -17,7 +17,7 @@ const TimelineColumn = ({ title, items }) => {
                                 <div>
                                     <p className="text-sm font-semibold text-gray-100">{item.location}</p>
                                     <p className="text-xs text-gray-400">
-                                        Prob: {(item.probability * 100).toFixed(1)}%
+                                        Confidence: {(item.probability * 100).toFixed(1)}%
                                     </p>
                                 </div>
                                 <div className="flex-shrink-0 ml-2">

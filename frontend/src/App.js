@@ -7,6 +7,7 @@ import LoginPage from "./pages/loginPage";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./pages/ProtectedRoute";
+import CampusActivity  from "./pages/CampusActivity";
 import './App.css';
 
 export default function App() {
@@ -22,6 +23,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <HomePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/activity" 
+            element={
+              <ProtectedRoute>
+                <CampusActivity />
               </ProtectedRoute>
             } 
           />

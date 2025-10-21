@@ -26,29 +26,22 @@ const DetailItem = ({ label, value }) => (
     </div>
 );
 
-const UserDetails = ({ user }) => { // Use curly braces for a function body
-    const [imageUrl, setImageUrl] = useState(''); // Start with an empty or placeholder URL
+const UserDetails = ({ user }) => {
+    const [imageUrl, setImageUrl] = useState('');
 
     useEffect(() => {
-        // Make sure user and user.face_id exist before trying to fetch
         if (user && user.face_id) {
-            // 1. Create a reference to the file
             const imageRef = ref(storage, `images/${user.face_id}.jpg`);
-
-            // 2. Get the download URL from the reference
             getDownloadURL(imageRef)
                 .then((url) => {
-                    setImageUrl(url); // Set the HTTPS URL to state
+                    setImageUrl(url);
                 })
                 .catch((error) => {
                     console.error("Error fetching image URL:", error);
-                    // Optionally, set a fallback image URL here
-                    // setImageUrl('path/to/default/avatar.png');
                 });
         }
-    }, [user]); // Rerun the effect if the user prop changes
+    }, [user]);
 
-    // Handle case where user data is not yet available
     if (!user) {
         return <div>Loading user details...</div>;
     }
@@ -57,7 +50,6 @@ const UserDetails = ({ user }) => { // Use curly braces for a function body
         <div>
             <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex items-center gap-6">
                 <img 
-                    // 3. Use the state variable for the src
                     src={imageUrl || 'https://placehold.co/96x96/4A5568/E2E8F0?text=...'} 
                     alt={`Face of ${user.name}`}
                     className="rounded-full h-24 w-24 object-cover border-2 border-gray-600"
@@ -109,23 +101,17 @@ const PredictionsComponent = ({ entityId }) => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!selectedDate) {
-            alert("Please select a date.");
             return;
         }
-
         setIsLoading(true);
-        setPredictionData(null); // Clear previous results
-
+        setPredictionData(null);
         try {
             const [year, month, day] = selectedDate.split('-');
             const formattedDate = `${day}-${month}-${year}`;
-            
             const response = await fetchPredictions(entityId, formattedDate);
             setPredictionData(response);
-
         } catch (error) {
             console.error("Failed to fetch predictions:", error);
-            alert("Could not fetch predictions. Please check the console.");
         } finally {
             setIsLoading(false);
         }
@@ -133,19 +119,7 @@ const PredictionsComponent = ({ entityId }) => {
 
     const timelineItems = useMemo(() => {
         if (!predictionData) return [];
-        
         const { time, location, probability } = predictionData;
-        
-        // Filter out times where probability is 0 or location is 'UNKNOWN' if desired
-        // return Object.keys(time)
-        //     .filter(key => probability[key] > 0 && location[key] !== 'UNKNOWN')
-        //     .map(key => ({
-        //         id: key,
-        //         time: time[key],
-        //         location: location[key],
-        //         probability: probability[key]
-        //     }));
-
         return Object.keys(time).map(key => ({
             id: key,
             time: time[key],
@@ -155,12 +129,11 @@ const PredictionsComponent = ({ entityId }) => {
     }, [predictionData]);
 
     return (
-        // Adjusted padding and background to match your screenshot
         <div className="pb-4 font-sans text-gray-100"> 
-            <div className=" mx-auto bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-700"> {/* Darker card */}
-                <h2 className="text-xl font-semibold text-gray-50 mb-4">Get Daily Prediction</h2> {/* Lighter text */}
+            <div className=" mx-auto bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-50 mb-4">Get Daily Prediction</h2>
                 <form onSubmit={handleSubmit} className="flex items-center space-x-4">
-                    <label htmlFor="prediction-date" className="font-medium text-gray-300"> {/* Lighter label */}
+                    <label htmlFor="prediction-date" className="font-medium text-gray-300">
                         Select Date:
                     </label>
                     <input
@@ -171,21 +144,17 @@ const PredictionsComponent = ({ entityId }) => {
                         min="2025-08-27"
                         max="2025-09-27"
                         required
-                        // Darker input field
                         className="p-2 border border-gray-600 rounded-md bg-gray-800 text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
                     <button 
                         type="submit" 
                         disabled={isLoading}
-                        // Button style matching your timeline purple/indigo
                         className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed"
                     >
                         {isLoading ? 'Fetching...' : 'Fetch Prediction'}
                     </button>
                 </form>
             </div>
-
-            {/* Conditionally render the Timeline */}
             {isLoading && <p className="text-center text-gray-400 mt-8">Loading...</p>}
             {predictionData && <PredictionsTimeline items={timelineItems} />}
         </div>
@@ -194,10 +163,9 @@ const PredictionsComponent = ({ entityId }) => {
 
 const AlertBox = ({ message }) => (
     <div
-        className="mt-6 flex items-center gap-3 rounded-md bg-red-100 p-4 text-red-700 border-l-4 border-red-500"
+        className="mt-6 flex items-center gap-4 rounded-lg bg-red-900/50 p-4 text-red-300 border border-red-700"
         role="alert"
     >
-        {/* Icon */}
         <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-6 w-6 shrink-0"
@@ -212,15 +180,12 @@ const AlertBox = ({ message }) => (
                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
         </svg>
-
-        {/* Message */}
         <p className="font-semibold">{message}</p>
     </div>
 );
-// --- Main Page Component ---
+
 export default function EntityProfilePage() {
     const { entityId } = useParams();
-
     const [user, setUser] = useState(null);
     const [swipes, setSwipes] = useState([]);
     const [captures, setCaptures] = useState([]);
@@ -232,7 +197,7 @@ export default function EntityProfilePage() {
     const [status, setStatus] = useState('loading');
     const [activeTab, setActiveTab] = useState('details');
     const [timelineEvents, setTimelineEvents] = useState([]);
-    const [alert,setAlert]=useState(false);
+    const [alertMessage, setAlertMessage] = useState('');
 
     useEffect(() => {
         if (!entityId) {
@@ -247,14 +212,10 @@ export default function EntityProfilePage() {
                     userResponse, swipesResponse, capturesResponse, bookingsResponse,
                     logsResponse, checkoutsResponse, notesResponse, faceResponse,
                 ] = await Promise.all([
-                    getUserById(entityId),
-                    getSwipesByEntityId(entityId),
-                    getCCTVCapturesByEntityId(entityId),
-                    getBookingsByEntityId(entityId),
-                    getWifiLogsByEntityId(entityId),
-                    getCheckoutsByEntityId(entityId),
-                    getNotesByEntityId(entityId),
-                    getFacesByEntityId(entityId),
+                    getUserById(entityId), getSwipesByEntityId(entityId),
+                    getCCTVCapturesByEntityId(entityId), getBookingsByEntityId(entityId),
+                    getWifiLogsByEntityId(entityId), getCheckoutsByEntityId(entityId),
+                    getNotesByEntityId(entityId), getFacesByEntityId(entityId),
                 ]);
 
                 setUser(userResponse.results[0] || null);
@@ -267,15 +228,25 @@ export default function EntityProfilePage() {
                 setFace(faceResponse[0] || null);
                 setStatus('success');
 
-                const lastDay = "09-25-2025";
+                const lastDay = "25-09-2025";
                 const response = await fetchPredictions(entityId, lastDay);
-
-                //check if all probabilities in last 12 hours is less than 0.5
-                const { probability } = response;
-                const probValues = Object.values(probability).slice(-12);
+                const { probability, time } = response;
+                const probKeys = Object.keys(probability);
+                const last12Keys = probKeys.slice(-12);
+                const probValues = last12Keys.map(key => probability[key]);
                 const allLowProb = probValues.every(p => p < 0.5);
-                setAlert(allLowProb);
-                console.log("All probabilities in last 12 hours less than 0.5:", allLowProb);
+                
+                if (allLowProb && last12Keys.length > 0) {
+                    const startTime = time[last12Keys[0]];
+                    const lastTimeKey = last12Keys[last12Keys.length - 1];
+                    const endTimeHour = (parseInt(lastTimeKey) + 1) % 24;
+                    const endTime = `${String(endTimeHour).padStart(2, '0')}:00`;
+                    const uncertaintyPeriod = `${startTime} - ${endTime}`;
+                    setAlertMessage(`Alert: Low prediction confidence for the period: ${uncertaintyPeriod}.`);
+                } else {
+                    setAlertMessage('');
+                }
+
             } catch (error) {
                 console.error("Error fetching entity data:", error);
                 setStatus('error');
@@ -286,28 +257,15 @@ export default function EntityProfilePage() {
     }, [entityId]);
 
     useEffect(() => {
-        console.log("swipes:",swipes);
-        console.log("captures:",captures);
-        console.log("bookings:",bookings);
-        console.log("logs:",logs);
-        console.log("checkouts:",checkouts);
-        console.log("notes:",notes);
-    }, [swipes, captures, bookings, logs, checkouts, notes]);
-
-    // Process all fetched data into a unified timeline format
-    useEffect(() => {
         const events = [];
         swipes.forEach(s => events.push({ id: s._id, type: 'Card Swipe', details: s.location_id, timestamp: s.timestamp }));
         captures.forEach(c => events.push({ id: c._id, type: 'CCTV Capture', details: c.location_id, timestamp: c.timestamp }));
         bookings.forEach(b => events.push({ id: b._id, type: 'Room Booking', details: b.room_id, timestamp: b.start_time }));
         logs.forEach(l => events.push({ id: l._id, type: 'WiFi Log', details: `AP: ${l.ap_id}`, timestamp: l.timestamp }));
         checkouts.forEach(co => events.push({ id: co._id, type: 'Library Checkout', details: co.book_id, timestamp: co.timestamp }));
-        
         events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
         setTimelineEvents(events);
-
     }, [swipes, captures, bookings, logs, checkouts, notes]);
-
 
     const renderContent = () => {
         switch (activeTab) {
@@ -383,10 +341,9 @@ export default function EntityProfilePage() {
                         </div>
                         <div>
                             {renderContent()}
-                            {/* The timeline is always visible below the tab content */}
                             {timelineEvents.length > 0 && <LocationTimeline events={timelineEvents} />}
                         </div>
-                        {alert && <AlertBox message="Alert: All predicted probabilities in the last 12 hours are below 0.5!" />}
+                        {alertMessage && <AlertBox message={alertMessage} />}
                         <div className="mt-12">
                             <PredictionsComponent entityId={entityId} />
                             </div>
@@ -396,4 +353,3 @@ export default function EntityProfilePage() {
         </div>
     );
 }
-
