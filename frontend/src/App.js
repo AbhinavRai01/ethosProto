@@ -9,6 +9,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import CampusActivity  from "./pages/CampusActivity";
 import QueryChat from "./pages/QueryChat";
+import AlertsDashboard from "./pages/AlertsPage";
 import './App.css';
 
 export default function App() {
@@ -64,6 +65,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <QueryChat />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/alerts" 
+            element={
+              <ProtectedRoute>
+                <AlertsDashboard />
               </ProtectedRoute>
             } 
           />
