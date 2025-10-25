@@ -1,13 +1,14 @@
 from flask import Flask
-# from app import app
 import os
+import sys
 from PythonScripts import Locations
-from PythonScripts import Prob
+from PythonScripts import Resolution
+from PythonScripts import Prediction
 from PythonScripts import FaceDetection
+import constants
 from werkzeug.utils import secure_filename
 from PythonScripts import cctvClean
 from PythonScripts import profilesClean
-from PythonScripts import Locations
 from flask import Blueprint, jsonify, request, url_for, current_app
 from flask_socketio import SocketIO, emit
 import google.generativeai as genai
@@ -15,12 +16,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+Locations.load_all_data()
+
 app = Flask(__name__)
 
 from flask_cors import CORS
 CORS(app) 
 
-# --- Configure Gemini API ---
+socketio = SocketIO(app, cors_allowed_origins="*")
+
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 except Exception as e:
@@ -28,39 +32,28 @@ except Exception as e:
     print("Please make sure you have a .env file with your GOOGLE_API_KEY")
 
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_images')
-# It's good practice to define constants here, but the main app will configure them.
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_images')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-# --- Helper Function ---
 def allowed_file(filename):
-    """Checks if the file's extension is allowed."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# app = Blueprint("app", __name__)
 
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json()
     entity_id = data.get("entity_id")
-    day = data.get("day")
-    recieved_data = Prob.predict_person_timeline(entity_id, day)
+    day_of_week = data.get("day")
+    recieved_data = Prediction.predict_daily_schedule(entity_id, day_of_week)
     return recieved_data
 
 @app.route("/image-search", methods=["POST"])
 def imageSearch():
 
-    print("Request files:", request.files)
-    print("Request form:", request.form)
-    print("Content-Type:", request.headers.get('Content-Type'))
-
     if 'image' not in request.files:
         return jsonify({"error": "No image part in the request"}), 400
         
     file = request.files['image']
-
-    print(file.filename)
 
     if file.filename == '':
         return jsonify({"error": "No image selected"}), 400
@@ -68,7 +61,6 @@ def imageSearch():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         
-        # Fixed: Replaced 'app.config' with 'current_app.config'
         save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         file.save(save_path)
 
@@ -95,29 +87,20 @@ def profileClean():
     output = profilesClean.ProfilesCleaner(data)
     return output
 
-@app.route('/locations', methods = ['POST'])
+@app.route('/locations', methods=['POST'])
 def locations_density():
-    print("shit")
     data = request.get_json()
     day_of_week = data.get("day_of_week")
-    # time_window_hours = data.get("time_window_hours", 1)
-    output = Locations.calculate_predicted_density(day_of_week, time_window_hours=1)
-    print("pls")
+    department = data.get("department") 
+    if department and department != "all":
+        output = Locations.calculate_department_density(day_of_week, department)
+    else:
+        output = Locations.calculate_predicted_density(day_of_week)
     return output
 
-if __name__ == "__main__":
-    print("--- Starting server: Pre-loading all data files... ---")
-    print("--- (This may take a minute, the server will be ready shortly) ---")
-    Locations.load_all_data()
-    app.run(debug=True)
-
-# make a default route
 @app.route("/")
 def home():
-    print("home route accessed")
     return "Ethos Backend is running!"
-
-socketio = SocketIO(app, cors_allowed_origins="*")
 
 @socketio.on('connect')
 def handle_connect():
@@ -127,18 +110,12 @@ def handle_connect():
 def handle_disconnect():
     print(f'Client disconnected: {request.sid}')
 
-@socketio.on('summarize_stream')
-def handle_summarize_stream(data):
+def _run_summarize_stream(sid, data):
     formattedData = data.get('formattedData')
     userName = data.get('userName')
-    print(f"Received summarize_stream request for user: {userName}")
+    print(f"Received summarize_stream request for user: {userName} (sid: {sid})")
 
-    system_prompt = """You are a behavioral analyst for a university. Your task is to create a detailed narrative of a user's predicted daily schedule based on probabilistic data.
-
-The output should be structured into three distinct paragraphs, one for each period of the day:
-1.  **Morning (roughly 12 AM to 7 AM):** Describe their likely morning routine, including potential breakfast spots, early classes, or study sessions.
-2.  **Daytime (roughly 8 AM to 3 PM):** Detail their activities during the main part of the day. This could involve lunch, lectures, lab work, or time spent in common areas like the library or gym.
-3.  **Evening (roughly 4 PM to 12 AM):** Describe their potential evening activities, such as dinner, late study sessions, social gatherings, or returning to their hostel."""
+    system_prompt = constants.USER_PREDICTION_PROMPT
     user_query = f"Summarize the following predicted schedule for user, it should be moderately short and in 3 paragraphs {userName}: {formattedData}"""
 
     try:
@@ -150,12 +127,98 @@ The output should be structured into three distinct paragraphs, one for each per
 
         for chunk in response_stream:
             if chunk.text:
-                emit('summary_chunk', {'text': chunk.text})
-                socketio.sleep(0.05) # Small delay to allow client to render
+                socketio.emit('summary_chunk', {'text': chunk.text}, room=sid)
+                socketio.sleep(0.05)
 
     except Exception as e:
-        print(f"Error during Gemini stream for {request.sid}: {e}")
-        emit('stream_error', {'error': 'Failed to generate summary. Check backend console for details.'})
+        print(f"Error during Gemini stream for {sid}: {e}")
+        socketio.emit('stream_error', {'error': 'Failed to generate summary. Check backend console for details.'}, room=sid)
     finally:
-        emit('stream_end')
-        print(f"Stream ended for user: {userName}")
+        socketio.emit('stream_end', room=sid)
+        print(f"Stream ended for user: {userName} (sid: {sid})")
+
+@socketio.on('summarize_stream')
+def handle_summarize_stream(data):
+    sid = request.sid
+    socketio.start_background_task(_run_summarize_stream, sid, data)
+
+def _run_heatmap_summary(sid, data):
+    day = data.get('day')
+    hour = data.get('hour')
+    department = data.get('department')
+    density = data.get('density')
+
+    print(f"Received summarize_heatmap request for {day} at {hour}:00, Dept: {department} (sid: {sid})")
+
+    system_prompt = constants.HEATMAP_HOURLY_PROMPT
+    
+    hour_str = f"{hour:02d}:00"
+    dept_str = f"for the {department} department" if department and department != "all" else "for all users"
+
+    user_query = f"Provide a brief summary for campus activity on {day} at {hour_str}, {dept_str}. The current density is: {density}"
+
+    try:
+        model = genai.GenerativeModel(
+            model_name="gemini-2.5-pro",
+            system_instruction=system_prompt
+        )
+        response_stream = model.generate_content(user_query, stream=True)
+
+        for chunk in response_stream:
+            if chunk.text:
+                socketio.emit('heatmap_summary_chunk', {'text': chunk.text}, room=sid)
+                socketio.sleep(0.05)
+
+    except Exception as e:
+        print(f"Error during Gemini heatmap stream for {sid}: {e}")
+        socketio.emit('stream_error', {'error': 'Failed to generate heatmap summary.'}, room=sid)
+    finally:
+        socketio.emit('heatmap_stream_end', room=sid)
+        print(f"Heatmap stream ended for: {sid}")
+
+@socketio.on('summarize_heatmap')
+def handle_heatmap_summary(data):
+    sid = request.sid
+    socketio.start_background_task(_run_heatmap_summary, sid, data)
+
+def _run_daily_heatmap_summary(sid, data):
+    day = data.get('day')
+    department = data.get('department')
+    daily_data = data.get('dailyData')
+
+    print(f"Received summarize_daily_heatmap request for {day}, Dept: {department} (sid: {sid})")
+
+    system_prompt = constants.HEATMAP_DAILY_PROMPT
+    
+    dept_str = f"for the {department} department" if department and department != "all" else "for all users"
+
+    user_query = constants.HEATMAP_DAILY_QUERY.format(day=day, dept_str=dept_str, daily_data=daily_data) 
+
+    try:
+        model = genai.GenerativeModel(
+            model_name="gemini-2.5-pro",
+            system_instruction=system_prompt
+        )
+        response_stream = model.generate_content(user_query, stream=True)
+
+        for chunk in response_stream:
+            if chunk.text:
+                socketio.emit('daily_summary_chunk', {'text': chunk.text}, room=sid)
+                socketio.sleep(0.05)
+
+    except Exception as e:
+        print(f"Error during Gemini daily heatmap stream for {sid}: {e}")
+        socketio.emit('stream_error', {'error': 'Failed to generate daily heatmap summary.'}, room=sid)
+    finally:
+        socketio.emit('daily_summary_end', room=sid)
+        print(f"Daily heatmap stream ended for: {sid}")
+
+@socketio.on('summarize_daily_heatmap')
+def handle_daily_heatmap_summary(data):
+    sid = request.sid
+    socketio.start_background_task(_run_daily_heatmap_summary, sid, data)
+
+if __name__ == "__main__":
+    print("--- Starting server: Pre-loading all data files... ---")
+    socketio.run(app, debug=True, use_reloader=False)
+

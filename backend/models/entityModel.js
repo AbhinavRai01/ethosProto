@@ -11,9 +11,8 @@ const entitySchema = new mongoose.Schema({
   card_id: { type: String },
   device_hash: { type: String },
   face_id: { type: String },
- // campus_card_swipes:{type:[]}
 }, {
-  timestamps: true // adds createdAt and updatedAt automatically
+  timestamps: true 
 });
 
 module.exports = mongoose.model("Entity", entitySchema);

@@ -1,15 +1,32 @@
 import { Router } from 'express';
-import { getActiveAlerts,getHighPriorityAlerts,getDismissedAlerts, dismissAlert } from '../controllers/alertController.js';
+import {
+  getActiveAlerts,
+  getHighPriorityAlerts,
+  getDismissedAlerts,
+  dismissAlert,
+  getActiveOvercrowdAlerts,
+  getActiveViolationAlerts,
+  getAllAlertsSortedByScore,
+  getAlertScoreExtremes // Import the new function
+} from '../controllers/alertController.js';
 
 const router = Router();
 
-// GET /api/datasteam/alerts
-// Fetches all alerts with status 'active'
-router.get('/active/:page', getActiveAlerts);
-router.get('/high/:page', getHighPriorityAlerts);
-router.get('/dismissed/:page',getDismissedAlerts);
-// PATCH /api/datasteam/alerts/:id/dismiss
-// Moves an alert's status to 'dismissed' for 12 hours
-router.patch('/:id/dismiss', dismissAlert);
+// Routes for Missing Person Alerts
+router.get('/missing/active/:page', getActiveAlerts);
+router.get('/missing/high/:page', getHighPriorityAlerts); // Note: This now fetches ALL high priority types
+router.get('/missing/dismissed/:page', getDismissedAlerts);
+router.patch('/missing/:id/dismiss', dismissAlert);
+
+// Routes for Overcrowding Alerts
+router.get('/overcrowd/active/:page', getActiveOvercrowdAlerts);
+
+// Routes for Violation Alerts
+router.get('/violation/active/:page', getActiveViolationAlerts);
+
+// NEW Route for All Active Alerts Sorted by Score
+router.get('/all/sorted-by-score/:page', getAllAlertsSortedByScore);
+router.get('/extremes', getAlertScoreExtremes);
 
 export default router;
+
