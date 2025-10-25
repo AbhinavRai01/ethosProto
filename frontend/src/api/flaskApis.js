@@ -13,16 +13,21 @@ const calculateDayOftheWeek = (dateString) => {
 
     return days[date.getDay()];
 };
-export const fetchPredictions = async (entityId, date) => {
+
+const calculateDayIndex = (dateObject) => {
+    // If the input is already a Date object, just call getDay() on it.
+    return dateObject.getDay();
+};
+
+
+export const fetchPredictions = async (entityId, dayIndex) => {
     try {
         const response = await axios.post(`${API_URL}predict`, {
             entity_id: entityId,
-            day: calculateDayOftheWeek(date)
+            day: dayIndex,
         });
-
         console.log("Prediction successful:", response.data);
         return response.data;
-
     } catch (error) {
         console.error("Error fetching predictions:", error);
         return null;
@@ -42,6 +47,19 @@ export const fetchLocationDensity = async (dayofWeek) => {
     }
 }
 
+export const fetchDepartmentDensity = async (dayofWeek, department) => {
+    try {
+        const response = await axios.post(`${API_URL}locations`, {
+            day_of_week: dayofWeek,
+            department: department
+        });
+        console.log("Location density by department fetch successful:", response.data);
+        return response.data;
+    } catch(error) {
+        console.error("Error fetching location density by department:", error);
+        return null;
+    }
+}
 export const searchEntityByFaceImage = async (imageFile) => {
     try {
 

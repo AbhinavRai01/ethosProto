@@ -9,12 +9,14 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import CampusActivity  from "./pages/CampusActivity";
 import QueryChat from "./pages/QueryChat";
+import { MarkedUsersProvider } from "./contexts/MarkedUsersContext";
 import './App.css';
 
 export default function App() {
   return (
     <div className="font-inter">
       <AuthProvider>
+      <MarkedUsersProvider>
         <Navbar />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -68,6 +70,7 @@ export default function App() {
             } 
           />
         </Routes>
+        </MarkedUsersProvider>
       </AuthProvider>
     </div>
   );

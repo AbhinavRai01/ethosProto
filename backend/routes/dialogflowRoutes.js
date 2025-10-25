@@ -1,5 +1,5 @@
 import express from 'express';
-export const router = express.Router();
+const router = express.Router();
 import {sendQueryToDialogflow} from '../controllers/dialogflowController.js'; // Note: You might need to add the .js extension
 router.post('/query', async (req, res) => {
     const { userQuery } = req.body;
@@ -10,3 +10,5 @@ router.post('/query', async (req, res) => {
         res.status(500).json({ error: 'Failed to get response from Dialogflow' });
     }
 });
+
+export default router;
