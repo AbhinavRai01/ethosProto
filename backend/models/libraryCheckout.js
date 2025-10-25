@@ -27,16 +27,6 @@ const libraryCheckoutSchema = new mongoose.Schema({
         required: [true, 'A timestamp for the checkout is required.'],
         default: Date.now,
     },
-    
-    // Optional: You might want to add a due date and a returned status
-    // dueDate: {
-    //     type: Date,
-    //     required: true
-    // },
-    // returned: {
-    //     type: Boolean,
-    //     default: false
-    // }
 
 }, {
     // Adds createdAt and updatedAt timestamps to the document

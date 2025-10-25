@@ -1,5 +1,4 @@
-
-const BASE_URL = 'http://localhost:5000/api/alerts'; 
+const BASE_URL = 'http://localhost:5000/api/alerts';
 
 const handleResponse = async (response) => {
   if (!response.ok) {
@@ -10,26 +9,25 @@ const handleResponse = async (response) => {
 };
 
 /**
- * Fetches a paginated list of all 'active' alerts.
- * @param {number} [page=1] - The page number to fetch.
+ * Fetches a paginated list of 'active' missing person alerts.
  */
 export const fetchActiveAlerts = async (page = 1) => {
   try {
-    const response = await fetch(`${BASE_URL}/active/${page}`);
+    const response = await fetch(`${BASE_URL}/missing/active/${page}`);
     return await handleResponse(response);
   } catch (error) {
-    console.error("Error fetching active alerts:", error);
-    throw error; // Re-throw to let the calling component handle it
+    console.error("Error fetching active missing alerts:", error);
+    throw error;
   }
 };
 
 /**
- * Fetches a paginated list of 'active' high-priority alerts.
- * @param {number} [page=1] - The page number to fetch.
+ * Fetches a paginated list of ALL 'active' high-priority alerts (combined).
  */
 export const fetchHighPriorityAlerts = async (page = 1) => {
   try {
-    const response = await fetch(`${BASE_URL}/high/${page}`);
+    // Note: The controller now handles combining all types for high priority
+    const response = await fetch(`${BASE_URL}/missing/high/${page}`);
     return await handleResponse(response);
   } catch (error) {
     console.error("Error fetching high priority alerts:", error);
@@ -38,12 +36,11 @@ export const fetchHighPriorityAlerts = async (page = 1) => {
 };
 
 /**
- * Fetches a paginated list of 'dismissed' alerts.
- * @param {number} [page=1] - The page number to fetch.
+ * Fetches a paginated list of 'dismissed' missing person alerts.
  */
 export const fetchDismissedAlerts = async (page = 1) => {
   try {
-    const response = await fetch(`${BASE_URL}/dismissed/${page}`);
+    const response = await fetch(`${BASE_URL}/missing/dismissed/${page}`);
     return await handleResponse(response);
   } catch (error) {
     console.error("Error fetching dismissed alerts:", error);
@@ -52,16 +49,13 @@ export const fetchDismissedAlerts = async (page = 1) => {
 };
 
 /**
- * Dismisses a specific alert by its ID (entity_id).
- * @param {string} alertId - The _id of the alert to dismiss.
+ * Dismisses a specific missing person alert by its ID (entity_id).
  */
 export const dismissAlert = async (alertId) => {
   try {
-    const response = await fetch(`${BASE_URL}/${alertId}/dismiss`, {
+    const response = await fetch(`${BASE_URL}/missing/${alertId}/dismiss`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     });
     return await handleResponse(response);
   } catch (error) {
@@ -70,4 +64,52 @@ export const dismissAlert = async (alertId) => {
   }
 };
 
+/**
+ * Fetches a paginated list of 'active' overcrowding alerts.
+ */
+export const fetchActiveOvercrowdAlerts = async (page = 1) => {
+  try {
+    const response = await fetch(`${BASE_URL}/overcrowd/active/${page}`);
+    return await handleResponse(response);
+  } catch (error) {
+    console.error("Error fetching active overcrowd alerts:", error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches a paginated list of 'active' violation alerts.
+ */
+export const fetchActiveViolationAlerts = async (page = 1) => {
+  try {
+    const response = await fetch(`${BASE_URL}/violation/active/${page}`);
+    return await handleResponse(response);
+  } catch (error) {
+    console.error("Error fetching active violation alerts:", error);
+    throw error;
+  }
+};
+
+/**
+ * NEW: Fetches a paginated list of ALL active alerts, sorted by risk score.
+ */
+export const fetchAllAlertsSortedByScore = async (page = 1) => {
+  try {
+    const response = await fetch(`${BASE_URL}/all/sorted-by-score/${page}`);
+    return await handleResponse(response);
+  } catch (error) {
+    console.error("Error fetching all alerts sorted by score:", error);
+    throw error;
+  }
+};
+
+export const fetchAlertScoreExtremes = async () => {
+    try {
+        const response = await fetch(`${BASE_URL}/extremes`); // Calls GET /api/alerts/extremes
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error fetching alert score extremes:", error);
+        throw error; // Re-throw for component-level handling
+    }
+};
 

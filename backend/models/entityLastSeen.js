@@ -24,6 +24,12 @@ const entityLastSeenSchema = new mongoose.Schema({
   last_seen_source: { 
     type: String, 
     required: true 
+  },
+
+  risk_factor:{
+    type: Number,
+    required : true,
+    default: 10
   }
 }, {
   timestamps: true 

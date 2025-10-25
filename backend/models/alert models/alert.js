@@ -39,6 +39,12 @@ const alertSchema = new mongoose.Schema({
   alert_generated_at: { 
     type: Date, 
     default: Date.now 
+  },
+
+  risk_score:{
+    type: Number,
+    default: 0,
+    required: true
   }
 }, {
   timestamps: true // This will update `updatedAt` every time the alert is re-confirmed
