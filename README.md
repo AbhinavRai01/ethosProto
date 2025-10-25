@@ -267,7 +267,7 @@ npm start
     <td><img src="https://i.postimg.cc/5yqL60cM/Screenshot-2025-10-25-222428.png" alt="Screenshot 6" width="300"></td>
   </tr>
   <tr>
-    <td><img src="https://i.postimg.cc/rySShhDN/Screenshot-2025-10-25-222452.png" alt="Screenshot 7" width="300"></td>
+    <td><img src="https://i.postimg.cc/4N4js2hw/Screenshot-2025-10-25-222728.png" alt="Screenshot 7" width="300"></td>
     <td><img src="https://i.postimg.cc/mkNCtDxF/Screenshot-2025-10-25-222624.png" alt="Screenshot 8" width="300"></td>
     <td><img src="https://i.postimg.cc/gcvvMMwk/Screenshot-2025-10-25-222658.png" alt="Screenshot 9" width="300"></td>
   </tr>
