@@ -278,7 +278,8 @@ npm start
   </tr>
   <tr>
     <td><img src="https://i.postimg.cc/yYs02F9Y/Screenshot-2025-10-25-222902.png" alt="Screenshot 13" width="300"></td>
-    <td></td>
+    <td><img src="https://i.postimg.cc/bYZ2WpmH/Screenshot-2025-10-25-231244.png" alt="Screenshot 13" width="300"></td>
+    <td><img src="https://i.postimg.cc/h4N7q6Yr/Screenshot-2025-10-25-231308.png" alt="Screenshot 13" width="300"></td>
     <td></td>
   </tr>
 </table>
