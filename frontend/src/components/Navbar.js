@@ -43,6 +43,9 @@ const Navbar = () => {
           <Link to="/user" className="hover:text-purple-500 transition-colors">
             Search
           </Link>
+          <Link to="/alerts" className="hover:text-purple-500 transition-colors">
+            Alerts
+          </Link>
           <Link to="/upload" className="hover:text-purple-500 transition-colors">
             Upload
           </Link>

@@ -8,10 +8,11 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import loginRoutes from './routes/loginRoutes.js';
-import dialogflowRoutes from './routes/dialogflowRoutes.js';
+import dialogflowRoutes from './routes/dialogflowRoutes.js'
+import datastreamRoutes from './kafka/kafkaRoutes.js'
+import alertRoutes from './routes/alertRoutes.js'
 
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -96,3 +97,10 @@ The output should be structured into three distinct paragraphs, one for each per
 
 
 // Use user routes
+app.use('/api/users', userRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/sec', loginRoutes);
+app.use('/api/dialogflow', dialogflowRoutes);
+app.use('/api/datastream',datastreamRoutes);
+app.use('/api/alerts',alertRoutes);
