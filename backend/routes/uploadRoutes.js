@@ -42,4 +42,4 @@ router.post('/faces', upload.single('file'), uploadFaceImages);
 
 router.post('/embeddings', upload.single('file'), uploadFaceEmbeddings);
 
-export default router
+export default router;
