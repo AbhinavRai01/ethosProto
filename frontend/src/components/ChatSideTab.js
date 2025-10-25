@@ -32,7 +32,7 @@ const ChatSideTab = () => {
             const botMessage = {
                 sender: 'bot',
                 type: result.type,
-                content: result.data
+                content: result.content
             };
             setMessages(prev => [...prev, botMessage]);
         } catch (error) {
@@ -46,10 +46,11 @@ const ChatSideTab = () => {
     const renderMessageContent = (msg) => {
         switch (msg.type) {
             case 'name_search':
+                console.log("Rendering name search results:", msg);
                 return <NameSearchResults results={msg.content} />;
             case 'timeline':
-                const { results, time } = msg.content;
-                return <TimelineResults results={results} time={time} />;
+                const { results, Hour } = msg.content;
+                return <TimelineResults results={results} Hour={Hour} />;
             case 'faceid_search':
                 return <FaceIdSearchResult result={msg.content} />;
             case 'id_search':
@@ -100,15 +101,15 @@ const ChatSideTab = () => {
                         ))}
                         {isLoading && (
                             <div className="flex justify-start">
-                                  <div className="bg-gray-700/50 text-gray-200 rounded-2xl p-3 px-4 rounded-bl-none">
-                                      <div className="flex items-center space-x-2">
-                                          <span className="text-sm text-gray-400">Thinking</span>
-                                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
-                                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
-                                      </div>
-                                  </div>
-                              </div>
+                                 <div className="bg-gray-700/50 text-gray-200 rounded-2xl p-3 px-4 rounded-bl-none">
+                                     <div className="flex items-center space-x-2">
+                                         <span className="text-sm text-gray-400">Thinking</span>
+                                         <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                                         <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
+                                         <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
+                                     </div>
+                                 </div>
+                             </div>
                         )}
                         <div ref={messagesEndRef} />
                     </div>

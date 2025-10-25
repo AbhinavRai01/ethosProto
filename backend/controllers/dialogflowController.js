@@ -35,13 +35,6 @@ export async function sendQueryToDialogflow(userQuery) {
     const [response] = await sessionClient.detectIntent(request);
     console.log('Dialogflow Response:', response);
 
-    // This response contains either:
-    // 1. The direct fulfillmentText/customPayload (if no webhook was needed)
-    // 2. The fulfillmentText/customPayload provided BY YOUR WEBHOOK
-    
-    // You would then display this response.queryResult.fulfillmentText 
-    // or parse response.queryResult.webhookPayload to the user.
-
     return response.queryResult;
 
   } catch (error) {

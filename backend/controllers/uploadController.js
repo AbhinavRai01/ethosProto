@@ -125,8 +125,14 @@ const uploadCctvFrames = async (req, res) => {
             face_id: row["face_id"] || row["Face ID"]
         }));
 
+        const deleteResult = await CctvFrame.deleteMany({});
         await CctvFrame.insertMany(frames);
-        res.json({ message: "CCTV frames uploaded successfully", insertedCount: frames.length });
+        
+        res.json({ 
+            message: "CCTV data replaced successfully", 
+            deletedCount: deleteResult.deletedCount,
+            insertedCount: frames.length 
+        });
     } catch (err) {
         console.error("❌ Error uploading CCTV frames:", err);
         res.status(500).json({ error: err.message });

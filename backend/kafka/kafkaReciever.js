@@ -10,10 +10,8 @@ import LabBooking from '../models/labBookings.js';
 import LibraryCheckout from '../models/libraryCheckout.js';
 import WifiLog from '../models/wifiLogs.js';
 
-// Load .env variables
 configDotenv();
 
-// MongoDB Configuration
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/swipe-db";
 
 // Kafka Configuration
@@ -40,7 +38,6 @@ const runWorker = async () => {
     // 4. Connect to Kafka Consumer
     await consumer.connect();
     console.log("Consumer connected");
-    // Subscribe without `fromBeginning: true` to avoid re-reading old messages
     await consumer.subscribe({ topics: TOPICS });
     console.log(`Subscribed to all topics: ${TOPICS.join(', ')}`);
 

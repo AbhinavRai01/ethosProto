@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useEffect } from 'react';
 import { searchEntityByName, searchEntityByFaceId} from './searchApis';
 import { getUserById } from './userApi';
 import { fetchPredictions } from './flaskApis';
@@ -8,6 +9,10 @@ const DIALOGFLOW_API_URL = 'http://localhost:5000/api/dialogflow/query';
 
 
 export const NameSearchResults = ({ results }) => {
+    useEffect(() => {
+        console.log("NameSearchResults received results:", results);
+    }, [results]);
+    
     if (!results || !results.results || results.results.length === 0) {
         return <p className="text-sm text-gray-300">No users found matching your query.</p>;
     }
@@ -54,11 +59,11 @@ export const FaceIdSearchResult = ({ result }) => {
     );
 };
 
-export const IdSearchResult = ({ result, idType }) => {
-    if (!result || !result.result || !result.result.name) {
+export const IdSearchResult = ({ result }) => {
+    const { result: user, idType } = result;
+    if (!user || !user.name) {
         return <p className="text-sm text-gray-300">No user found for that {idType}.</p>;
     }
-    const user = result.result;
     return (
          <div className="space-y-3 text-center p-2 bg-gray-800/50 rounded-lg">
             <p className="font-bold text-white pb-4 text-sm">Found User for {idType}</p>
@@ -75,21 +80,19 @@ export const IdSearchResult = ({ result, idType }) => {
 };
 
 
-export const TimelineResults = ({ results, time }) => {
-    if (!results || !results.time || Object.keys(results.time).length === 0) {
+export const TimelineResults = ({ results, Hour }) => {
+    if (!results || !Array.isArray(results) || results.length === 0) {
         return <p className="text-sm text-gray-300">No timeline data found.</p>;
     }
-    if (typeof time !== 'string' || !time.includes(':')) {
+    if (typeof Hour !== 'string' || !Hour.includes(':')) {
         return <p className="text-sm text-center text-gray-300 p-3 bg-red-800/50 rounded-lg">Error: Invalid time data received.</p>;
     }
-    const eventsArray = Object.keys(results.time).map(key => ({
-        time: results.time[key],
-        location: results.location[key],
-        confidence: results.probability[key],
-    }));
-    const [targetHour] = time.split(':').map(Number);
+    
+    const eventsArray = results;
+
+    const [targetHour] = Hour.split(':').map(Number);
     const specificEvent = eventsArray.find(event => {
-        const [eventHour] = event.time.split(':').map(Number);
+        const [eventHour] = event.Hour.split(':').map(Number);
         return eventHour === targetHour;
     });
     const formatDisplayTime = (timeString) => {
@@ -105,25 +108,25 @@ export const TimelineResults = ({ results, time }) => {
         <div className="space-y-3">
             {specificEvent ? (
                 <div className="p-3 bg-purple-900/50 border border-purple-500 rounded-lg text-center">
-                    <p className="font-bold text-white text-sm mb-1">Expected Location at {formatDisplayTime(time)}:</p>
-                    <p className="font-semibold text-purple-300 text-lg">{specificEvent.location}</p>
-                    <p className="text-xs text-gray-300">({specificEvent.time})</p>
+                    <p className="font-bold text-white text-sm mb-1">Expected Location at {formatDisplayTime(Hour)}:</p>
+                    <p className="font-semibold text-purple-300 text-lg">{specificEvent["Predicted Location"]}</p>
+                    <p className="text-xs text-gray-300">({specificEvent.Hour})</p>
                 </div>
             ) : (
-                 <p className="text-sm text-center text-gray-300 p-3 bg-gray-800/50 rounded-lg">No event found for the specified time.</p>
+                 <p className="text-sm text-center text-gray-300 p-3 bg-gray-800/50 rounded-lg">No event found for the specified Hour.</p>
             )}
             <p className="font-bold text-white text-sm pt-2 border-t border-purple-500/20">Full Day Timeline:</p>
             <div className="flex text-xs font-semibold text-gray-400 px-2 pb-1">
-                <div className="w-1/4">Time</div>
+                <div className="w-1F/4">Time</div>
                 <div className="w-2/4">Location</div>
                 <div className="w-1/4 text-right">Confidence</div>
             </div>
             <div className="space-y-1 text-sm max-h-60 overflow-y-auto pr-2">
                 {eventsArray.map((event, index) => (
                     <div key={index} className="flex items-center p-2 bg-gray-800/50 rounded-md">
-                        <div className="w-1/4 text-gray-300">{event.time}</div>
-                        <div className="w-2/4 font-medium text-purple-400">{event.location}</div>
-                        <div className="w-1/4 text-right text-gray-400 text-xs">{(event.confidence * 100).toFixed(0)}%</div>
+                        <div className="w-1/4 text-gray-300">{event.Hour}</div>
+                        <div className="w-2/4 font-medium text-purple-400">{event["Predicted Location"]}</div>
+                        <div className="w-1/4 text-right text-gray-400 text-xs">{event.Confidence}</div>
                     </div>
                 ))}
             </div>
@@ -132,15 +135,11 @@ export const TimelineResults = ({ results, time }) => {
 };
 
 export const GenerateTimelineResult = ({ results, date }) => {
-    if (!results || !results.time || Object.keys(results.time).length === 0) {
+    if (!results || !Array.isArray(results) || results.length === 0) {
         return <p className="text-sm text-gray-300">No timeline data to generate.</p>;
     }
 
-    const eventsArray = Object.keys(results.time).map(key => ({
-        time: results.time[key],
-        location: results.location[key],
-        confidence: results.probability[key],
-    }));
+    const eventsArray = results;
 
     return (
         <div className="space-y-3">
@@ -157,9 +156,9 @@ export const GenerateTimelineResult = ({ results, date }) => {
             <div className="space-y-1 text-sm max-h-72 overflow-y-auto pr-2">
                 {eventsArray.map((event, index) => (
                     <div key={index} className="flex items-center p-2 bg-gray-800/50 rounded-md">
-                        <div className="w-1/4 text-gray-300">{event.time}</div>
-                        <div className="w-2/4 font-medium text-purple-400">{event.location}</div>
-                        <div className="w-1/4 text-right text-gray-400 text-xs">{(event.confidence * 100).toFixed(0)}%</div>
+                        <div className="w-1/4 text-gray-300">{event.Hour}</div>
+                        <div className="w-2/4 font-medium text-purple-400">{event["Predicted Location"]}</div>
+                        <div className="w-1/4 text-right text-gray-400 text-xs">{event.Confidence}</div>
                     </div>
                 ))}
             </div>
@@ -167,46 +166,62 @@ export const GenerateTimelineResult = ({ results, date }) => {
     );
 };
 
+const getDayIndexFromString = (dateString) => {
+    const date = new Date(`${dateString}T12:00:00`);
+    return date.getDay();
+};
 // --- Main API Call Function ---
 export const sendDialogflowQuery = async (query) => {
     try {
         const response = await axios.post(DIALOGFLOW_API_URL, { "userQuery": query });
+        
+        console.log("Raw Dialogflow response.data:", response.data);
         const data = JSON.parse(response.data);
+        console.log("Parsed Dialogflow data:", data);
 
         switch (data.operation) {
             case "1": {
                 const results = await searchEntityByName(data.username);
-                return { type: 'name_search', data: results };
+                console.log("Name search results (from searchEntityByName):", results);
+                return { type: 'name_search', content: results };
             }
             case "2": {
                 const date_time = new Date(data.date_time);
                 const date = date_time.toISOString().split('T')[0];
-                const time = date_time.toTimeString().split(' ')[0];
+                const Hour = date_time.toTimeString().split(' ')[0];
                 const entityId = 'E' + data.entity_id;
-                const results = await fetchPredictions(entityId, date);
-                return { type: 'timeline', data: { results, time } };
+                const results = await fetchPredictions(entityId, getDayIndexFromString(date));
+                console.log("Timeline results (from fetchPredictions):", results);
+                return { type: 'timeline', content: { results, Hour } };
             }
              case "3": { // get_faceid
                 const results = await searchEntityByFaceId('F' + data.face_id);
-                return { type: 'id_search', data: { result: results.results[0], idType: 'Face ID' } };
+                console.log("Face ID search results:", results);
+                const userResult = results.results && results.results.length > 0 ? results.results[0] : null;
+                return { type: 'faceid_search', content: { result: userResult } };
             }
             case "4": { // get_entityid
                 const results = await getUserById('E' + data.entity_id);
-                return { type: 'id_search', data: { result: results.results[0], idType: 'Entity ID' } };
+                console.log("Entity ID search results:", results);
+                const userResult = results.results && results.results.length > 0 ? results.results[0] : null;
+                return { type: 'id_search', content: { result: userResult, idType: 'Entity ID' } };
             }
             case "5": { // generate_timeline
                  const date_time = new Date(data.date);
                  const date = date_time.toISOString().split('T')[0];
                  const time = "00:00:00"; // Default to start of day if no time given
                  const entityId = 'E' + data.entity_id;
-                 const results = await fetchPredictions(entityId, date);
-                 return { type: 'generate_timeline', data: { results, date } };
+                 const results = await fetchPredictions(entityId, getDayIndexFromString(date));
+                 console.log("Generate timeline results (from fetchPredictions):", results);
+                 return { type: 'generate_timeline', content: { results, date } };
             }
             default:
-                return { type: 'text', data: "Sorry, I couldn't process that request." };
+                console.warn("Unknown Dialogflow operation:", data.operation);
+                return { type: 'text', content: "Sorry, I couldn't process that request." };
         }
     } catch (error) {
         console.error("Error sending query to Dialogflow API:", error);
-        return { type: 'error', data: 'There was an error connecting to the NLU service.' };
+        return { type: 'error', content: 'There was an error connecting to the NLU service.' };
     }
 };
+

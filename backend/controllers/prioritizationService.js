@@ -3,36 +3,25 @@ import Location from '../models/location.js';
 import EntityRisk from '../models/alert models/entityRisk.js';
 
 // --- Configuration ---
-// These seem unused in the provided code block, but kept for potential future use
-// const RISK_MULTIPLIER = 1.05;
-// const DEFAULT_ENTITY_RISK = 10;
-// const DEFAULT_LOCATION_RISK = 0;
-
-// --- In-memory caches ---
-// Using the structure provided in the user's code block
 const riskMaps = {
   entity: new Map(),
   location: new Map(),
 };
 
-/**
- * Loads all risk_score fields from the DB into memory.
- * Run this when your AlertService starts.
- */
 export const loadRiskMaps = async () => {
   console.log('Loading risk maps...');
   try {
     // --- Load Entity Risk Scores ---
-    const entityRisks = await EntityRisk.find({}).lean(); // <-- Fetch from EntityRisk
-    riskMaps.entity = new Map(); // Clear previous map
+    const entityRisks = await EntityRisk.find({}).lean(); 
+    riskMaps.entity = new Map(); 
     for (const riskDoc of entityRisks) {
-      riskMaps.entity.set(riskDoc._id, riskDoc.risk_score); // _id is entity_id
+      riskMaps.entity.set(riskDoc._id, riskDoc.risk_score); 
     }
     console.log(`Loaded risk scores for ${riskMaps.entity.size} entities.`);
 
     // --- Load Location Risk Scores ---
     const locations = await Location.find({}).lean();
-    riskMaps.location = new Map(); // Clear previous map
+    riskMaps.location = new Map(); 
     for (const loc of locations) {
       riskMaps.location.set(loc.location_name.toUpperCase(), loc.risk_score);
     }
@@ -40,8 +29,6 @@ export const loadRiskMaps = async () => {
 
   } catch (error) {
     console.error("Failed to load risk maps:", error);
-    // Depending on requirements, you might want to exit or use default scores
-    // Resetting maps in case of partial load failure
     riskMaps.entity = new Map();
     riskMaps.location = new Map();
   }
@@ -91,9 +78,7 @@ export const calculateScore = (alertType, context) => {
   let totalScore = 0;
   const reasons = [];
 
-  // 1. Get Entity Risk
   if (context.entity_id) {
-    // Get risk score from the in-memory map
     const entityRisk = riskMaps.entity.get(context.entity_id) || 0;
     if (entityRisk > 0) {
       totalScore += entityRisk;
@@ -120,9 +105,8 @@ export const calculateScore = (alertType, context) => {
     }
     case 'VIOLATION': {
       // Add base violation score
-      totalScore += 25; // Base score for any violation
+      totalScore += 25; 
       reasons.push('Violation(25pts)');
-      // Add time-based risk
       const { score, reason } = getTimeRisk(context.timestamp);
       totalScore += score;
       reasons.push(reason);
@@ -148,19 +132,19 @@ export const calculateScore = (alertType, context) => {
 export const rankScore = (score) => {
   if (score >= 200) {
     return {
-      priority: 'high', // Changed from medium to align with Alert model enum 'high'
+      priority: 'high', 
       recommendation: 'Immediate dispatch of security personnel required.',
     };
   }
-  if (score >= 100) { // Changed threshold for medium->high
+  if (score >= 100) { 
     return {
-      priority: 'high', // Changed from low to align with Alert model enum 'high'
+      priority: 'high',
       recommendation: 'Notify on-duty staff and review CCTV footage.',
     };
   }
   // All scores below 100 are now 'normal'
   return {
-    priority: 'normal', // Changed from low to align with Alert model enum 'normal'
+    priority: 'normal', 
     recommendation: 'Log for review. No immediate action required.',
   };
 };
