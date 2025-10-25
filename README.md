@@ -272,7 +272,7 @@ npm start
     <td><img src="https://i.postimg.cc/gcvvMMwk/Screenshot-2025-10-25-222658.png" alt="Screenshot 9" width="300"></td>
   </tr>
   <tr>
-    <td><img src="https://i.postimg.cc/jqzz88WS/Screenshot-2025-10-25-222728.png" alt="Screenshot 10" width="300"></td>
+    <td><img src="https://i.postimg.cc/rySShhDN/Screenshot-2025-10-25-222452.png" alt="Screenshot 10" width="300"></td>
     <td><img src="https://i.postimg.cc/dtwGg8dv/Screenshot-2025-10-25-222810.png" alt="Screenshot 11" width="300"></td>
     <td><img src="https://i.postimg.cc/tCpF8hP9/Screenshot-2025-10-25-222839.png" alt="Screenshot 12" width="300"></td>
   </tr>
